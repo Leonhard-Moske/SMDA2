@@ -22,6 +22,8 @@
 1. normalizing flows
     Man wird wohl aus einem Prior ziehen und dann den normalizing flow darauf anwenden. Dabei die dkl verwenden als loss function. Ich weiß noch nicht
     was die ziel distribution seien soll. Ne das Ziel ist es ja einen classifier zu bauen. Dabei wollen wir von einem satz aus features zu einer pdf kommen.
+	
+	15.06: Neuer Stand: wir haben einen gaussian prior und wir haben die transformierte vairable. Wir trainieren unseren Flow so, dass die Data die transformierte 	Variable ist. Dann kann man die log likelyhood bei neuen daten auswerten (quasi beim prior) und diese ist dann eine gute wahrscheinlichkeitsverteilung. Dabei haben wir keine density distr. angenommen außer die Data. Wir mappen quasi unsere Data zu dem prior welcher dann eine gute probability distr ist. Dann kann man das bei allen classes machen und dann teilen 
 2. astro stars
 
 #### What I did
@@ -31,6 +33,7 @@
 #### Refrences !!
 
 * https://github.com/LukasRinder/normalizing-flows
+* https://www.jmlr.org/papers/volume22/19-1028/19-1028.pdf  
 
 ### code
 
