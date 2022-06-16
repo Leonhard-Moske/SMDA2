@@ -44,5 +44,6 @@ führe ich weiter aus wenn ich die theorie gelesen habe.
 ### Protokoll / Notizen
 
 12.06: Start mit aussuchen. README erstellt. Als erstes wohl normalizing flow theorie lesen.
+16.06: habe den algo jetzt verstanden. Werde am Freitag nachfragen. Als nächstes wohl tensorflow angucken -> tutorial.
 
 ### bullshit additional ideas
