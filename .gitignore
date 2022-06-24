@@ -1,2 +1,8 @@
-termPaper/LukRinNFREPO/*
-termPaper/Tex/template/*
+termPaper/LukRinNFREPO
+termPaper/Tex/template
+termPaper/Tex/final_report/*.aux
+termPaper/Tex/final_report/*.dvi
+termPaper/Tex/final_report/*.log
+termPaper/Tex/final_report/*.gz
+termPaper/Tex/final_report/*.bbl
+termPaper/Tex/final_report/*.blg
