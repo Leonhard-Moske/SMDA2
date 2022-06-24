@@ -50,6 +50,6 @@ führe ich weiter aus wenn ich die theorie gelesen habe.
 	Tex template von computational physics übernommen, Abstact angefangen und sections beschriftet.	
 	Will das mit der TODO-Methode von Ben machen.
 	Todos eingefügt. Nicht alle die ich machen muss.
-
+* 24.06: Habe eine website für die verschiedenen Flows gefunden. Will am Ende rumpspielen mit random freezing und systematic freezing usw. Fasse die Arten die ich gefunden habe in Onenote zusammen.
 
 ### bullshit additional ideas
