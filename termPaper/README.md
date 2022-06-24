@@ -34,6 +34,7 @@
 
 * https://github.com/LukasRinder/normalizing-flows
 * https://www.jmlr.org/papers/volume22/19-1028/19-1028.pdf  
+* https://deepgenerativemodels.github.io/notes/flow/
 
 ### code
 
@@ -43,7 +44,12 @@ führe ich weiter aus wenn ich die theorie gelesen habe.
 
 ### Protokoll / Notizen
 
-12.06: Start mit aussuchen. README erstellt. Als erstes wohl normalizing flow theorie lesen.
-16.06: habe den algo jetzt verstanden. Werde am Freitag nachfragen. Als nächstes wohl tensorflow angucken -> tutorial.
+* 12.06: Start mit aussuchen. README erstellt. Als erstes wohl normalizing flow theorie lesen.
+* 16.06: habe den algo jetzt verstanden. Werde am Freitag nachfragen. Als nächstes wohl tensorflow angucken -> tutorial.
+* 23.06: Habe mir das Tutorial angeguckt. schein nicht sooo komplex. Ich denke sobald man die Struktur von den bijektors verstanden hat ist es nicht so schwer. Wahrscheinlich am besten bei dem tutorial anfangen und dann über train utils runter gehen. Will als haupt Füller des Papers verschiedene Flows vergleichen.
+	Tex template von computational physics übernommen, Abstact angefangen und sections beschriftet.	
+	Will das mit der TODO-Methode von Ben machen.
+	Todos eingefügt. Nicht alle die ich machen muss.
+
 
 ### bullshit additional ideas
