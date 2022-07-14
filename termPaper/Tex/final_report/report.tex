@@ -85,10 +85,24 @@ In this paper, the expressiveness of fully connected neural networks is used in 
 %\tableofcontents
 
 \section{Introduction}
+\todo{want to classify and density estimation}
+Normalizing flows is a powerfull method that utilizes the transformation of random variables for either density estimation or for generativ sampling.
+
 
 \section{Theory}
 \todo{Dataset erklären}
-\todo{normalizing flow theory erklären}
+\todo{classifier by density estimation}
+\subsection{Normalizing flows}
+To estimate the density distribution we make use of the formula of  transformations of random variables. 
+
+Let $z$ be a random variable distributed as $r(z)$ then a random variable $x = f(z|\theta)$, where f is a invertible and differentiable function with parameters $\theta$, is distributed as $q(x)$ with:
+\begin{align*}
+	q(x) = r(z)\left|\frac{\text{d} z}{\text{d} x}\right| = r(z)\left|\text{det}J_f(z)\right|^{-1}
+\end{align*}
+To get a density estimation of data $x'$ with some features we would vary $\theta$ until $q(x)$ is close to the target distribution of the data, then we could compute $r(f^{-1}(x'|\mathbf{\theta}))$ which is the estimate for the probability of the data. 
+\todo{DKL}
+\todo{citations}
+
 \todo{wie classifier bzw. was für auswertungen}
 
 \section{Methods}
