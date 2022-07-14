@@ -3,7 +3,8 @@
 
 ### TODO
 
-* Tex anlegen mit Template
+* überall arbeiten können!!
+
 * literatur raussuchen
     1. astro theorie -> maybe ruth?
     2. normalizing flows für density estimation
@@ -11,8 +12,28 @@
 * kurze Theory dataset
 * dataset ansehen
     1. plots
+* welche Metriken
 
 ### Tex
+
+* Theorie texen:
+    * astro kurz -> Ruth?
+    * change of variables
+    * kulback leibler divergence
+    * wie classifier
+    * verschiedene Flow parametrisierungen
+    * Neuronal networks
+    * metriken
+
+* Density distr. plotten vor und nach transf.
+* verschiedene Arten
+
+* Metriken:
+    * Loss over time
+    * IBC AIC
+    * mikowski differenz
+    * Roc curve
+    * andere Finden
 
 #### Abstract
 
@@ -27,6 +48,12 @@
 2. astro stars
 
 #### What I did
+
+Tuneable params:
+    network: depth, width, activation function
+    optimizer
+    batchsize
+    test statistic
 
 #### Findings
 
@@ -51,5 +78,6 @@ führe ich weiter aus wenn ich die theorie gelesen habe.
 	Will das mit der TODO-Methode von Ben machen.
 	Todos eingefügt. Nicht alle die ich machen muss.
 * 24.06: Habe eine website für die verschiedenen Flows gefunden. Will am Ende rumpspielen mit random freezing und systematic freezing usw. Fasse die Arten die ich gefunden habe in Onenote zusammen.
+* 13.07: Fange jetzt langsam wieder an. Sollte mir wohl jetzt so langsam ein Programm zusammensuchen. Nebenbei: theory texen, dataset plotten. Sachen aus dem Tutorial hier reinpacken, damit ich auch am Laptop gucken kann. Pseudocode machen für Objectstruktur
 
 ### bullshit additional ideas
