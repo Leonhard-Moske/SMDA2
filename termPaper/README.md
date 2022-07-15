@@ -81,5 +81,8 @@ führe ich weiter aus wenn ich die theorie gelesen habe.
 * 24.06: Habe eine website für die verschiedenen Flows gefunden. Will am Ende rumpspielen mit random freezing und systematic freezing usw. Fasse die Arten die ich gefunden habe in Onenote zusammen.
 * 13.07: Fange jetzt langsam wieder an. Sollte mir wohl jetzt so langsam ein Programm zusammensuchen. Nebenbei: theory texen, dataset plotten. Sachen aus dem Tutorial hier reinpacken, damit ich auch am Laptop gucken kann. Pseudocode machen für Objectstruktur
 * 14.07: Repo angeguckt. Habe Struktur ein wenig mehr verstanden. Muss jetzt verstehen, wie die flows in die bijectors kommen. Aber als nächstes glaube ich theorie Texen als Nachguck werk.
+* 15.07: Data exploration, histogramms of features, correlation between fatures, kolmogorov metric. Kurz theorie zu den Sternen durchgelesen. 
+	https://en.wikipedia.org/wiki/RR_Lyrae_variable
+	https://en.wikipedia.org/wiki/Kappa%E2%80%93mechanism	
 
 ### bullshit additional ideas
