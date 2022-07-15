@@ -1,6 +1,7 @@
 import astroML.datasets
 import matplotlib.pyplot as plt
 
+#load data into /tmp/astroML_data
 x_data, y_data = astroML.datasets.fetch_rrlyrae_combined(data_home="/tmp/astroML_data", download_if_missing=True)
 
 #histogramms split by label
@@ -32,7 +33,36 @@ from scipy.stats import ks_2samp
 for i in range(len(x_data[0])):
     print(f"feature {i}\t",ks_2samp(x_data[y_data==0,i], x_data[y_data==1,i]))
 
+#correlation between features
+#------------------------------------------------------------------------------
+import itertools as it
+import numpy as np
 
 
+fig, ax = plt.subplots(len(x_data[0]),len(x_data[0]), figsize=(20,20))
+plt.subplots_adjust(hspace=0.5) # has to be after subplots
 
-#todo correlation plots in 4 x 4 grid
+for ij in it.product(range(len(x_data[0])), repeat=2):
+    ax[ij[0]][ij[1]].hist2d(x_data[:,ij[0]],x_data[:,ij[1]], bins=100)
+    ax[ij[0]][ij[1]].set_xlabel(f"feature {ij[0]}")
+    ax[ij[0]][ij[1]].set_ylabel(f"feature {ij[1]}")
+
+
+plt.savefig(f"figs/correlation_features.png",format="png")
+plt.clf()
+
+# just RR Lyrae
+fig, ax = plt.subplots(len(x_data[0]),len(x_data[0]), figsize=(20,20))
+plt.subplots_adjust(hspace=0.5) # has to be after subplots so that labels dont overlap
+
+
+for ij in it.product(range(len(x_data[0])), repeat=2):
+    ax[ij[0]][ij[1]].hist2d(x_data[y_data==1,ij[0]],x_data[y_data==1,ij[1]], bins=25)
+    ax[ij[0]][ij[1]].set_xlabel(f"feature {ij[0]}")
+    ax[ij[0]][ij[1]].set_ylabel(f"feature {ij[1]}")
+
+plt.savefig(f"figs/correlation_features_label1.png",format="png")
+plt.clf()
+
+
+#todo feature name list
