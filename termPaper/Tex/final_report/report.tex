@@ -92,16 +92,21 @@ Normalizing flows is a powerfull method that utilizes the transformation of rand
 \section{Theory}
 \todo{Dataset erklären}
 \todo{classifier by density estimation}
-\subsection{Normalizing flows}
+\subsection{functions of random variables}
 To estimate the density distribution we make use of the formula of  transformations of random variables. 
 
 Let $z$ be a random variable distributed as $r(z)$ then a random variable $x = f(z|\theta)$, where f is a invertible and differentiable function with parameters $\theta$, is distributed as $q(x)$ with:
 \begin{align*}
 	q(x) = r(z)\left|\frac{\text{d} z}{\text{d} x}\right| = r(z)\left|\text{det}J_f(z)\right|^{-1}
 \end{align*}
-To get a density estimation of data $x'$ with some features we would vary $\theta$ until $q(x)$ is close to the target distribution of the data, then we could compute $r(f^{-1}(x'|\mathbf{\theta}))$ which is the estimate for the probability of the data. 
-\todo{DKL}
+We call $r(z)$ the base distribution and $q(x)$ the target distribution.
+
+To get a density estimation of data $x'$ with some features we would vary $\theta$ until $q(x)$ is close to the target distribution of the data, then we could compute $r(f^{-1}(x'|\mathbf{\theta}))\left|\text{det}J_f(x'|\mathbf{\theta})\right|$ which is the estimate for the probability of the data. To do this we have to be able to compute the inverse transformation, its Jacobian determinant and evaluate the base distribution.
 \todo{citations}
+\subsection{parameterize the transformation}
+\subsection{training the transformation}
+\todo{DKL}
+
 
 \todo{wie classifier bzw. was für auswertungen}
 
