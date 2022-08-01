@@ -19,7 +19,7 @@ x_data, y_data = astroML.datasets.fetch_rrlyrae_combined(data_home="/tmp/astroML
 
 featurelabels = ["u-g","g-r", "r-i", "i-z"]
 
-x_data = tf.convert_to_tensor(x_data, dtype=np.float32)
+x_data1 = tf.convert_to_tensor(x_data[y_data == 1], dtype=np.float32)
 
 print(x_data)
 
@@ -82,9 +82,13 @@ maf = tfd.TransformedDistribution(
 )
 
 # initialize flow
-samples = maf.sample()
+samples = maf.sample(10) #generate 10 samples
+
+print(maf.prob([0,1,0,1]))
+print(maf.bijector.inverse([0.0,1.0,0.0,1.0]))
 
 print(samples)
+#print(maf.mean())
 
 @tf.function
 def train_density_estimation(distribution, optimizer, batch):
@@ -102,3 +106,87 @@ def train_density_estimation(distribution, optimizer, batch):
     optimizer.apply_gradients(zip(gradients, distribution.trainable_variables)) # apply the gradients
 
     return loss
+
+@tf.function
+def nll(distribution, data):
+    """
+    Computes the negative log liklihood loss for a given distribution and given data.
+    :param distribution: TensorFlow distribution, e.g. tf.TransformedDistribution.
+    :param data: Data or a batch from data.
+    :return: Negative Log Likelihodd loss.
+    """
+    return -tf.reduce_mean(distribution.log_prob(data))
+
+def plot_heatmap_2d(dist, xmin=-4.0, xmax=4.0, ymin=-4.0, ymax=4.0, mesh_count=1000, name=None):
+    plt.figure()
+    
+    x = tf.linspace(xmin, xmax, mesh_count)
+    y = tf.linspace(ymin, ymax, mesh_count)
+    X, Y = tf.meshgrid(x, y)
+    
+    concatenated_mesh_coordinates = tf.transpose(tf.stack([tf.reshape(Y, [-1]), tf.reshape(X, [-1]), [0.0]*40000, [0.0]*40000])) # 0,0 for 4 dim 
+    prob = dist.prob(concatenated_mesh_coordinates)
+    #plt.hexbin(concatenated_mesh_coordinates[:,0], concatenated_mesh_coordinates[:,1], C=prob, cmap='rainbow')
+    prob = prob.numpy()
+    
+    plt.imshow(tf.transpose(tf.reshape(prob, (mesh_count, mesh_count))), origin="lower")
+    plt.xticks([0, mesh_count * 0.25, mesh_count * 0.5, mesh_count * 0.75, mesh_count], [xmin, xmin/2, 0, xmax/2, xmax])
+    plt.yticks([0, mesh_count * 0.25, mesh_count * 0.5, mesh_count * 0.75, mesh_count], [ymin, ymin/2, 0, ymax/2, ymax])
+    if name:
+        plt.savefig(name + ".png", format="png")
+
+
+base_lr = 1e-3
+end_lr = 1e-4
+max_epochs = int(5e3)  # maximum number of epochs of the training
+learning_rate_fn = tf.keras.optimizers.schedules.PolynomialDecay(base_lr, max_epochs, end_lr, power=0.5)
+
+# initialize checkpoints
+checkpoint_directory = "{}/tmp_{}".format("coolData", str(hex(random.getrandbits(32))))
+checkpoint_prefix = os.path.join(checkpoint_directory, "ckpt")
+
+opt = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn)  # optimizer
+checkpoint = tf.train.Checkpoint(optimizer=opt, model=maf)
+
+global_step = []
+train_losses = []
+val_losses = []
+min_val_loss = tf.convert_to_tensor(np.inf, dtype=tf.float32)  # high value to ensure that first loss < min_loss
+min_train_loss = tf.convert_to_tensor(np.inf, dtype=tf.float32)
+min_val_epoch = 0
+min_train_epoch = 0
+delta_stop = 1000  # threshold for early stopping
+
+t_start = time.time()  # start time
+
+# start training
+for i in range(max_epochs):
+    print(i)
+    for batch in x_data1:
+        train_loss = train_density_estimation(maf, opt, batch)
+    print(train_loss)
+
+    if i % int(100) == 0:
+        #val_loss = nll(maf, val_data)
+        global_step.append(i)
+        train_losses.append(train_loss)
+        #val_losses.append(val_loss)
+        #print(f"{i}, train_loss: {train_loss}, val_loss: {val_loss}")
+
+        if train_loss < min_train_loss:
+            min_train_loss = train_loss
+            min_train_epoch = i
+
+        # if val_loss < min_val_loss:
+        #     min_val_loss = val_loss
+        #     min_val_epoch = i
+        #     checkpoint.write(file_prefix=checkpoint_prefix)  # overwrite best val model
+
+        elif i - min_val_epoch > delta_stop:  # no decrease in min_val_loss for "delta_stop epochs"
+            break
+
+    if i % int(10) == 0:
+        # plot heatmap every 1000 epochs
+        plot_heatmap_2d(maf, -4.0, 4.0, -4.0, 4.0, mesh_count=200, name="testingpng")
+
+train_time = time.time() - t_start
