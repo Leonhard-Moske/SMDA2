@@ -19,9 +19,11 @@ x_data, y_data = astroML.datasets.fetch_rrlyrae_combined(data_home="/tmp/astroML
 
 featurelabels = ["u-g","g-r", "r-i", "i-z"]
 
-x_data1 = tf.convert_to_tensor(x_data[y_data == 1], dtype=np.float32)
-
-print(x_data)
+xtfData = tf.data.Dataset.from_tensor_slices(x_data)
+print(next(iter(xtfData)))
+xtfData = xtfData.batch(batch_size=len(x_data)//10)
+# print(next(iter(xtfData)))
+# print(len(x_data))
 
 hidden_shape = [200, 200]  # hidden shape for MADE network of MAF
 layers = 12  # number of layers of the flow
@@ -72,7 +74,7 @@ class Made(tfk.layers.Layer):
 bijectors = []
 for i in range(0, layers):
     bijectors.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
-    bijectors.append(tfb.Permute(permutation=[1, 0, 2, 3]))  # data permutation after layers of MAF
+    bijectors.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of MAF
     
 bijector = tfb.Chain(bijectors=list(reversed(bijectors)), name='chain_of_maf')
 
@@ -84,10 +86,10 @@ maf = tfd.TransformedDistribution(
 # initialize flow
 samples = maf.sample(10) #generate 10 samples
 
-print(maf.prob([0,1,0,1]))
-print(maf.bijector.inverse([0.0,1.0,0.0,1.0]))
+# print(maf.prob([0,1,0,1]))
+# print(maf.bijector.inverse([0.0,1.0,0.0,1.0]))
 
-print(samples)
+# print(samples)
 #print(maf.mean())
 
 @tf.function
@@ -162,7 +164,7 @@ t_start = time.time()  # start time
 # start training
 for i in range(max_epochs):
     print(i)
-    for batch in x_data1:
+    for batch in xtfData:
         train_loss = train_density_estimation(maf, opt, batch)
     print(train_loss)
 
