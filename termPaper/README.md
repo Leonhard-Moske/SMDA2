@@ -84,5 +84,7 @@ führe ich weiter aus wenn ich die theorie gelesen habe.
 * 15.07: Data exploration, histogramms of features, correlation between fatures, kolmogorov metric. Kurz theorie zu den Sternen durchgelesen. 
 	https://en.wikipedia.org/wiki/RR_Lyrae_variable
 	https://en.wikipedia.org/wiki/Kappa%E2%80%93mechanism	
+* 03.08: Gecodet. Es funktioniert. Muss jetzt refactorn(in classe schreiben?), umschreiben, auswertungs code plots usw, abbruch bed und dann mehr bijectors ausprobieren.
+    Zu Testen: anders herum trainieren (lecture material), sachen renormalizieren, layers usw. Zuerst bestätigen dass es funktioniert, dann auswertung
 
 ### bullshit additional ideas

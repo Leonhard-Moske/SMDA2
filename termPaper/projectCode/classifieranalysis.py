@@ -1,5 +1,3 @@
-# testing script with hacked together code
-
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -9,34 +7,12 @@ import os
 import random
 import astroML.datasets
 
+
 tfd = tfp.distributions
 tfb = tfp.bijectors
+tfk = tf.keras
 
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
-
-#load data into /tmp/astroML_data
-x_data, y_data = astroML.datasets.fetch_rrlyrae_combined(data_home="/tmp/astroML_data", download_if_missing=True)
-
-featurelabels = ["u-g","g-r", "r-i", "i-z"]
-
-xtfData = tf.data.Dataset.from_tensor_slices(x_data[y_data==1])
-print(next(iter(xtfData)))
-xtfData = xtfData.batch(batch_size=len(x_data)//10)
-
-xtfData2 = tf.data.Dataset.from_tensor_slices(x_data[y_data==0])
-print(next(iter(xtfData)))
-xtfData2 = xtfData2.batch(batch_size=len(x_data)//100)
-# print(next(iter(xtfData)))
-# print(len(x_data))
-
-hidden_shape = [200, 200]  # hidden shape for MADE network of MAF
-layers = 12  # number of layers of the flow
-
-base_dist = tfd.Normal(loc=0.0, scale=1.0)  # specify base distribution
-base_dist2 = tfd.Normal(loc=0.0, scale=1.0)  # specify base distribution
-
-
-tfk = tf.keras
 
 class Made(tfk.layers.Layer):
     """
@@ -76,47 +52,8 @@ class Made(tfk.layers.Layer):
         return shift, tf.math.tanh(log_scale)
 
 
-bijectors = []
-for i in range(0, layers):
-    bijectors.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
-    bijectors.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of MAF
-    
-bijector = tfb.Chain(bijectors=list(reversed(bijectors)), name='chain_of_maf')
-
-bijectors2 = []
-for i in range(0, layers):
-    bijectors2.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
-    bijectors2.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of MAF
-    
-bijector2 = tfb.Chain(bijectors=list(reversed(bijectors2)), name='chain_of_maf')
-
-
-maf2 = tfd.TransformedDistribution(
-    distribution=tfd.Sample(base_dist2, sample_shape=[4]),
-    bijector=bijector2,
-)
-
-maf = tfd.TransformedDistribution(
-    distribution=tfd.Sample(base_dist, sample_shape=[4]),
-    bijector=bijector,
-)
-
-
-
-
-# initialize flow
-samples = maf.sample(10) #generate 10 samples
-
-print(maf.prob([0,1,0,1]))
-print(maf2.prob([0,1,0,1]))
-print(maf.distribution.prob([0,0,0,0]))
-# print(maf.bijector.inverse([0.0,1.0,0.0,1.0]))
-
-# print(samples)
-#print(maf.mean())
-
 @tf.function
-def train_density_estimation(distribution, optimizer, batch):
+def train_density_estimation0(distribution, optimizer, batch):
     """
     Train function for density estimation normalizing flows.
     :param distribution: TensorFlow distribution, e.g. tf.TransformedDistribution.
@@ -133,7 +70,7 @@ def train_density_estimation(distribution, optimizer, batch):
         return loss
 
 @tf.function
-def train_density_estimation2(distribution, optimizer, batch):
+def train_density_estimation1(distribution, optimizer, batch):
     """
     Train function for density estimation normalizing flows.
     :param distribution: TensorFlow distribution, e.g. tf.TransformedDistribution.
@@ -177,19 +114,99 @@ def plot_heatmap_2d(dist, xmin=-4.0, xmax=4.0, ymin=-4.0, ymax=4.0, mesh_count=1
     if name:
         plt.savefig(name + ".png", format="png")
 
+def shuffle_split(samples, train_split, val_split):
+    '''
+    Shuffles the data and performs a train-validation-test split.
+    Test = 1 - (train + val).
+    
+    :param samples: Samples from a dataset / data distribution.
+    :param train: Portion of the samples used for training (float32, 0<=train<1).
+    :param val: Portion of the samples used for validation (float32, 0<=val<1).
+    :return train_data, val_data, test_data: 
+    '''
+
+    if train_split + val_split > 1:
+        raise Exception('train_split plus val_split has to be smaller or equal to one.')
+
+    batch_size = len(samples)
+    np.random.shuffle(samples)
+    n_train = int(round(train_split * batch_size))
+    n_val = int(round((train_split + val_split) * batch_size))
+    train_data = tf.cast(samples[0:n_train], dtype=tf.float32)
+    val_data = tf.cast(samples[n_train:n_val], dtype=tf.float32)
+    test_data = tf.cast(samples[n_val:batch_size], dtype=tf.float32)
+
+    return train_data, val_data, test_data
+
+#------------------------------------------------------------------------------
+
+
+train_split = 0.8
+val_split = 0.1
+batchsizes = [1000, 100]
+
+hidden_shape= [200, 200]
+layers = 12
 
 base_lr = 1e-3
 end_lr = 1e-4
-max_epochs = int(100)  # maximum number of epochs of the training
-learning_rate_fn = tf.keras.optimizers.schedules.PolynomialDecay(base_lr, max_epochs, end_lr, power=0.5)
+max_epochs = [int(10), int(100)]  # maximum number of epochs of the training
 
-# initialize checkpoints
-checkpoint_directory = "{}/tmp_{}".format("coolData", str(hex(random.getrandbits(32))))
-checkpoint_prefix = os.path.join(checkpoint_directory, "ckpt")
+#------------------------------------------------------------------------------
 
-opt = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn)  # optimizer
-opt2 = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn)  # optimizer
-checkpoint = tf.train.Checkpoint(optimizer=opt, model=maf)
+
+#load data into /tmp/astroML_data
+x_data, y_data = astroML.datasets.fetch_rrlyrae_combined(data_home="/tmp/astroML_data", download_if_missing=True)
+
+featurelabels = ["u-g","g-r", "r-i", "i-z"]
+
+train_data0, batched_val_data0, batched_test_data0 = shuffle_split(x_data[y_data == 0], train_split, val_split)
+train_data1, batched_val_data1, batched_test_data1 = shuffle_split(x_data[y_data == 1], train_split, val_split)
+
+train_data_batched0 = tf.data.Dataset.from_tensor_slices(train_data0).batch(batch_size=batchsizes[0])
+train_data_batched1 = tf.data.Dataset.from_tensor_slices(train_data1).batch(batch_size=batchsizes[1])
+
+#------------------------------------------------------------------------------
+
+base_dist0 = tfd.Normal(loc=0.0, scale=1.0)  # specify base distribution
+base_dist1 = tfd.Normal(loc=0.0, scale=1.0)  # specify base distribution
+
+
+
+bijectors0 = []
+for i in range(0, layers):
+    bijectors0.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
+    bijectors0.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of MAF
+    
+bijector0 = tfb.Chain(bijectors=list(reversed(bijectors0)), name='bijector0')
+
+bijectors1 = []
+for i in range(0, layers):
+    bijectors1.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
+    bijectors1.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of MAF
+    
+bijector1 = tfb.Chain(bijectors=list(reversed(bijectors1)), name='bijector1')
+
+flow0 = tfd.TransformedDistribution(
+    distribution=tfd.Sample(base_dist0, sample_shape=[4]),
+    bijector=bijector0,
+)
+
+flow1 = tfd.TransformedDistribution(
+    distribution=tfd.Sample(base_dist1, sample_shape=[4]),
+    bijector=bijector1,
+)
+
+#------------------------------------------------------------------------------
+
+
+learning_rate_fn0 = tf.keras.optimizers.schedules.PolynomialDecay(base_lr, max_epochs[0], end_lr, power=0.5)
+learning_rate_fn1 = tf.keras.optimizers.schedules.PolynomialDecay(base_lr, max_epochs[1], end_lr, power=0.5)
+
+
+opt0 = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn0)  # optimizer
+opt1 = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn1)  # optimizer
+
 
 global_step = []
 train_losses = []
@@ -200,85 +217,30 @@ min_val_epoch = 0
 min_train_epoch = 0
 delta_stop = 1000  # threshold for early stopping
 
-t_start = time.time()  # start time
-
-# start training
-for i in range(max_epochs):
+for i in range(max_epochs[0]):
     print(i)
-    for batch in xtfData:
-        train_loss = train_density_estimation(maf, opt, batch)
+    for batch in train_data_batched0:
+        train_loss = train_density_estimation0(flow0, opt0, batch)
     print(train_loss)
 
-    if i % int(100) == 0:
-        #val_loss = nll(maf, val_data)
-        global_step.append(i)
-        train_losses.append(train_loss)
-        #val_losses.append(val_loss)
-        #print(f"{i}, train_loss: {train_loss}, val_loss: {val_loss}")
-
-        if train_loss < min_train_loss:
-            min_train_loss = train_loss
-            min_train_epoch = i
-
-        # if val_loss < min_val_loss:
-        #     min_val_loss = val_loss
-        #     min_val_epoch = i
-        #     checkpoint.write(file_prefix=checkpoint_prefix)  # overwrite best val model
-
-        elif i - min_val_epoch > delta_stop:  # no decrease in min_val_loss for "delta_stop epochs"
-            break
-
-    #if i % int(10) == 0:
-        ## plot heatmap every 1000 epochs
-        #plot_heatmap_2d(maf, -4.0, 4.0, -4.0, 4.0, mesh_count=200, name="testingpng")
-
-
-max_epochs = int(6)
-
-for i in range(max_epochs):
+for i in range(max_epochs[1]):
     print(i)
-    for batch in xtfData2:
-        train_loss = train_density_estimation2(maf2, opt2, batch)
+    for batch in train_data_batched1:
+        train_loss = train_density_estimation1(flow1, opt1, batch)
     print(train_loss)
 
-    if i % int(100) == 0:
-        #val_loss = nll(maf, val_data)
-        global_step.append(i)
-        train_losses.append(train_loss)
-        #val_losses.append(val_loss)
-        #print(f"{i}, train_loss: {train_loss}, val_loss: {val_loss}")
-
-        if train_loss < min_train_loss:
-            min_train_loss = train_loss
-            min_train_epoch = i
-
-        # if val_loss < min_val_loss:
-        #     min_val_loss = val_loss
-        #     min_val_epoch = i
-        #     checkpoint.write(file_prefix=checkpoint_prefix)  # overwrite best val model
-
-        elif i - min_val_epoch > delta_stop:  # no decrease in min_val_loss for "delta_stop epochs"
-            break
-
-    #if i % int(10) == 0:
-        ## plot heatmap every 1000 epochs
-        #plot_heatmap_2d(maf, -4.0, 4.0, -4.0, 4.0, mesh_count=200, name="testingpng")
-
-
-train_time = time.time() - t_start
-
-# evaluate the distributions
+#------------------------------------------------------------------------------
 
 def classify(dist1, dist2, data): #returns the test statistic ln(p1(data)/p2(data))
     #print(data)
     prob1 = dist1.log_prob(data)
     prob2 = dist2.log_prob(data)
-    print(dist1.prob(data))
-    print(dist2.prob(data))
-    return 0#prob1 - prob2
+    #print(dist1.prob(data))
+    #print(dist2.prob(data))
+    return prob1 - prob2
 
-for i in range(1):
-    print(classify(maf, maf2, next(iter(xtfData))))
+validation0=classify(flow0, flow1, batched_val_data0)
+validation1=classify(flow0, flow1, batched_val_data1)
 
-for i in range(1):
-    print(classify(maf, maf2, next(iter(xtfData2))))
+print(validation0)
+print(validation1)
