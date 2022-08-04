@@ -6,6 +6,9 @@ import tensorflow_probability as tfp
 import os
 import random
 import astroML.datasets
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve
+
 
 
 tfd = tfp.distributions
@@ -232,11 +235,8 @@ for i in range(max_epochs[1]):
 #------------------------------------------------------------------------------
 
 def classify(dist1, dist2, data): #returns the test statistic ln(p1(data)/p2(data))
-    #print(data)
     prob1 = dist1.log_prob(data)
     prob2 = dist2.log_prob(data)
-    #print(dist1.prob(data))
-    #print(dist2.prob(data))
     return prob1 - prob2
 
 validation0=classify(flow0, flow1, batched_val_data0)
@@ -244,3 +244,21 @@ validation1=classify(flow0, flow1, batched_val_data1)
 
 print(validation0)
 print(validation1)
+
+#plotranges = (np.min(tf.concat([validation0, validation1], axis = 0).numpy()), np.max(tf.concat([validation0, validation1], axis = 0).numpy()))
+plotranges = (-100, 100)
+
+plt.hist(validation0[::4].numpy(), range=plotranges ,  bins= 100, label = "background validation response")
+plt.hist(validation1.numpy(),      range=plotranges ,  bins= 100, label = "signal validation response")
+plt.xlabel(r"$\frac{\ln(flow_0)}{\ln(flow_1)}$")
+plt.legend()
+plt.yscale("log")
+plt.savefig("figs/fracln_validation_hist.png", format="png")
+plt.clf()
+
+roc = roc_curve(np.concatenate((np.zeros(len(validation0)),np.ones(len(validation1)))),tf.concat([validation0, validation1], axis = 0).numpy(),pos_label=1, drop_intermediate=False)
+plt.plot(roc[0],roc[1])
+plt.xlabel("1 - purity eg. error rate")
+plt.ylabel("efficiency")
+plt.savefig("figs/ROC_validation.png", format="png")
+plt.clf()

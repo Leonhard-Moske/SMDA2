@@ -273,9 +273,14 @@ def classify(dist1, dist2, data): #returns the test statistic ln(p1(data)/p2(dat
     #print(data)
     prob1 = dist1.log_prob(data)
     prob2 = dist2.log_prob(data)
-    print(dist1.prob(data))
-    print(dist2.prob(data))
-    return 0#prob1 - prob2
+    #print(dist1.prob(data))
+    #print(dist2.prob(data))
+    return prob1 - prob2
+
+xtfData = xtfData.batch(batch_size=1)
+xtfData2 = xtfData2.batch(batch_size=1)
+
+
 
 for i in range(1):
     print(classify(maf, maf2, next(iter(xtfData))))
