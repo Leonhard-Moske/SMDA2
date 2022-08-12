@@ -292,52 +292,70 @@ opt0 = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn0)  # optimizer
 opt1 = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn1)  # optimizer
 
 
-global_step = []
-train_losses = []
+train_losses = [[],[]]
 val_losses = []
-min_val_loss = tf.convert_to_tensor(np.inf, dtype=tf.float32)  # high value to ensure that first loss < min_loss
-min_train_loss = tf.convert_to_tensor(np.inf, dtype=tf.float32)
-min_val_epoch = 0
-min_train_epoch = 0
-delta_stop = 1000  # threshold for early stopping
+
 
 for i in range(max_epochs[0]):
     print(i)
     for batch in train_data_batched0:
         train_loss = train_density_estimation0(flow0, opt0, batch)
+    train_losses[0].append(train_loss)
     print(train_loss)
 
 for i in range(max_epochs[1]):
     print(i)
     for batch in train_data_batched1:
         train_loss = train_density_estimation1(flow1, opt1, batch)
+    train_losses[1].append(train_loss)
     print(train_loss)
 
 #------------------------------------------------------------------------------
 
 def classify(dist1, dist2, data): #returns the test statistic ln(p1(data)/p2(data))
-    #print(data)
     prob1 = dist1.log_prob(data)
     prob2 = dist2.log_prob(data)
-    #print(dist1.prob(data))
-    #print(dist2.prob(data))
     return prob1 - prob2
+
+def proportionRight(data, signal, flow0, flow1, cut= 0): #returns proportion of correct classified data
+    response = classify(flow0, flow1, data)
+    n1right = np.count_nonzero(np.logical_and((response < cut), (signal == 1)))
+    n0right = np.count_nonzero(np.logical_and((response > cut), (signal == 0)))
+    return (n1right + n0right)/len(signal)
+
+
+print(proportionRight(tf.concat([batched_val_data0, batched_val_data1], axis = 0),np.concatenate((np.zeros(len(batched_val_data0)),np.ones(len(batched_val_data1)))), flow0, flow1))
 
 validation0=classify(flow0, flow1, batched_val_data0)
 validation1=classify(flow0, flow1, batched_val_data1)
 
-print(validation0)
-print(validation1)
+dataResp0= classify(flow0, flow1, x_data[y_data == 0])
+dataResp1= classify(flow0, flow1, x_data[y_data == 1])
+
+#plotting
+#------------------------------------------------------------------------------
 
 
 #plotranges = (np.min(tf.concat([validation0, validation1], axis = 0).numpy()), np.max(tf.concat([validation0, validation1], axis = 0).numpy()))
 plotranges = (-100, 100)
 
-plt.hist(validation0[::4].numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = "background validation response")
-plt.hist(validation1.numpy(),      range=plotranges, alpha = 0.7 ,  bins= 500, label = "signal validation response")
+plt.title("validation response")
+plt.hist(validation0.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"background; entries: {len(validation0)}")
+plt.hist(validation1.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"signal; entries: {len(validation1)}")
 plt.xlabel(r"$\frac{\ln(flow_0)}{\ln(flow_1)}$")
 plt.legend()
+plt.yscale("log")
 plt.savefig("figs/fracln_validation_hist.png", format="png")
+plt.clf()
+
+
+plt.title("whole data response")
+plt.hist(dataResp0.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"background; entries: {len(dataResp0)}")
+plt.hist(dataResp1.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"signal; entries: {len(dataResp1)}")
+plt.xlabel(r"$\frac{\ln(flow_0)}{\ln(flow_1)}$")
+plt.legend()
+plt.yscale("log")
+plt.savefig("figs/fracln_data_hist.png", format="png")
 plt.clf()
 
 roc = roc_curve(np.concatenate((np.zeros(len(validation0)),np.ones(len(validation1)))),tf.concat([validation0, validation1], axis = 0).numpy(),pos_label=1, drop_intermediate=False)
@@ -345,4 +363,29 @@ plt.plot(roc[0],roc[1])
 plt.xlabel("1 - purity eg. error rate")
 plt.ylabel("efficiency")
 plt.savefig("figs/ROC_validation.png", format="png")
+plt.clf()
+
+plt.title("training loss function values")
+plt.plot(train_losses[0], label="flow0")
+plt.plot(train_losses[1], label="flow1")
+plt.xlabel("number of training steps")
+plt.ylabel("training loss")
+plt.legend()
+plt.savefig("figs/training_loss_both.png", format="png")
+plt.clf()
+
+plt.title("training loss function values")
+plt.plot(train_losses[0], label="flow0", color= "tab:blue")
+plt.xlabel("number of training steps")
+plt.ylabel("training loss")
+plt.legend()
+plt.savefig("figs/training_loss_0.png", format="png")
+plt.clf()
+
+plt.title("training loss function values")
+plt.plot(train_losses[1], label="flow1", color= "tab:orange")
+plt.xlabel("number of training steps")
+plt.ylabel("training loss")
+plt.legend()
+plt.savefig("figs/training_loss_1.png", format="png")
 plt.clf()
