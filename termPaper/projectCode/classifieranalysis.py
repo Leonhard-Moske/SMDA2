@@ -6,9 +6,10 @@ import tensorflow_probability as tfp
 import os
 import random
 import astroML.datasets
-import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve
-
+import keras.layers as kl
+import keras
+from keras import Model 
 
 
 tfd = tfp.distributions
@@ -141,6 +142,83 @@ def shuffle_split(samples, train_split, val_split):
 
     return train_data, val_data, test_data
 
+
+
+class NN(tfk.layers.Layer):
+    """
+    Neural Network Architecture for calcualting s and t for Real-NVP
+    
+    :param input_shape: shape of the data coming in the layer
+    :param hidden_units: Python list-like of non-negative integers, specifying the number of units in each hidden layer.
+    :param activation: Activation of the hidden units
+    """
+    def __init__(self, input_shape, n_hidden=[512, 512], activation="relu", name="nn"):
+        super(NN, self).__init__(name="nn")
+        layer_list = []
+        for i, hidden in enumerate(n_hidden):
+            layer_list.append(kl.Dense(hidden, activation=activation))
+        self.layer_list = layer_list
+        self.log_s_layer = kl.Dense(input_shape, activation="tanh", name='log_s')
+        self.t_layer = kl.Dense(input_shape, name='t')
+
+    def call(self, x):
+        y = x
+        for layer in self.layer_list:
+            y = layer(y)
+        log_s = self.log_s_layer(y)
+        t = self.t_layer(y)
+        return log_s, t
+
+
+
+class RealNVP(tfb.Bijector):
+    """
+    Implementation of a Real-NVP for Denisty Estimation. L. Dinh “Density estimation using Real NVP,” 2016.
+    This implementation only works for 1D arrays.
+    :param input_shape: shape of the data coming in the layer
+    :param hidden_units: Python list-like of non-negative integers, specifying the number of units in each hidden layer.
+
+    """
+
+    def __init__(self, input_shape, n_hidden=[512, 512], forward_min_event_ndims=1, validate_args: bool = False, name="real_nvp"):
+        super(RealNVP, self).__init__(
+            validate_args=validate_args, forward_min_event_ndims=forward_min_event_ndims, name=name
+        )
+
+        assert input_shape % 2 == 0
+        input_shape = input_shape // 2
+        nn_layer = NN(input_shape, n_hidden)
+        x = tf.keras.Input(input_shape)
+        log_s, t = nn_layer(x)
+        self.nn = Model(x, [log_s, t], name="nn")
+        
+    def _bijector_fn(self, x):
+        log_s, t = self.nn(x)
+        return tfb.Chain([tfb.Scale(log_scale=log_s),tfb.Shift(shift = t)])
+
+
+    def _forward(self, x):
+        x_a, x_b = tf.split(x, 2, axis=-1)
+        y_b = x_b
+        y_a = self._bijector_fn(x_b).forward(x_a)
+        y = tf.concat([y_a, y_b], axis=-1)
+        return y
+
+    def _inverse(self, y):
+        y_a, y_b = tf.split(y, 2, axis=-1)
+        x_b = y_b
+        x_a = self._bijector_fn(y_b).inverse(y_a)
+        x = tf.concat([x_a, x_b], axis=-1)
+        return x
+
+    def _forward_log_det_jacobian(self, x):
+        x_a, x_b = tf.split(x, 2, axis=-1)
+        return self._bijector_fn(x_b).forward_log_det_jacobian(x_a, event_ndims=1)
+    
+    def _inverse_log_det_jacobian(self, y):
+        y_a, y_b = tf.split(y, 2, axis=-1)
+        return self._bijector_fn(y_b).inverse_log_det_jacobian(y_a, event_ndims=1)
+
 #------------------------------------------------------------------------------
 
 
@@ -149,11 +227,12 @@ val_split = 0.1
 batchsizes = [1000, 100]
 
 hidden_shape= [200, 200]
-layers = 12
+layers = 8
+n_hidden = [100, 100, 100, 100]
 
 base_lr = 1e-3
 end_lr = 1e-4
-max_epochs = [int(10), int(100)]  # maximum number of epochs of the training
+max_epochs = [int(20), int(200)]  # maximum number of epochs of the training
 
 #------------------------------------------------------------------------------
 
@@ -178,14 +257,16 @@ base_dist1 = tfd.Normal(loc=0.0, scale=1.0)  # specify base distribution
 
 bijectors0 = []
 for i in range(0, layers):
-    bijectors0.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
+    bijectors0.append(RealNVP(input_shape= (4), n_hidden= n_hidden))
+    #bijectors0.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
     bijectors0.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of MAF
     
 bijector0 = tfb.Chain(bijectors=list(reversed(bijectors0)), name='bijector0')
 
 bijectors1 = []
 for i in range(0, layers):
-    bijectors1.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
+    bijectors1.append(RealNVP(input_shape= (4), n_hidden= n_hidden))
+    #bijectors1.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
     bijectors1.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of MAF
     
 bijector1 = tfb.Chain(bijectors=list(reversed(bijectors1)), name='bijector1')
@@ -235,8 +316,11 @@ for i in range(max_epochs[1]):
 #------------------------------------------------------------------------------
 
 def classify(dist1, dist2, data): #returns the test statistic ln(p1(data)/p2(data))
+    #print(data)
     prob1 = dist1.log_prob(data)
     prob2 = dist2.log_prob(data)
+    #print(dist1.prob(data))
+    #print(dist2.prob(data))
     return prob1 - prob2
 
 validation0=classify(flow0, flow1, batched_val_data0)
@@ -245,14 +329,14 @@ validation1=classify(flow0, flow1, batched_val_data1)
 print(validation0)
 print(validation1)
 
+
 #plotranges = (np.min(tf.concat([validation0, validation1], axis = 0).numpy()), np.max(tf.concat([validation0, validation1], axis = 0).numpy()))
 plotranges = (-100, 100)
 
-plt.hist(validation0[::4].numpy(), range=plotranges ,  bins= 100, label = "background validation response")
-plt.hist(validation1.numpy(),      range=plotranges ,  bins= 100, label = "signal validation response")
+plt.hist(validation0[::4].numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = "background validation response")
+plt.hist(validation1.numpy(),      range=plotranges, alpha = 0.7 ,  bins= 500, label = "signal validation response")
 plt.xlabel(r"$\frac{\ln(flow_0)}{\ln(flow_1)}$")
 plt.legend()
-plt.yscale("log")
 plt.savefig("figs/fracln_validation_hist.png", format="png")
 plt.clf()
 
