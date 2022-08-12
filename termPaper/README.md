@@ -3,17 +3,50 @@
 
 ### TODO
 
-* überall arbeiten können!!
-
+##### Tex
 * literatur raussuchen
     1. astro theorie -> maybe ruth?
     2. normalizing flows für density estimation
     3. paper aus der Anleitung lesen: https://github.com/LukasRinder/normalizing-flows
-* kurze Theory dataset
-* dataset ansehen
-    1. plots
-* welche Metriken
+* plots:
+	* normalizing flow
+	* vllt density der flows
+	* time vs richtig klass
+	* classifier response
+	* 
+* Abstract
+* Introduction rest vlt
+* nf param
+	* freezing
+	* jac det
+	* 
+* nf 
+* REAL NVP
+	1. trafo
+	2. jac det
+	3. wie nn aussieht	 
+	4. inverability
+	5. permutation
+* Autoregression thing
+* Methods
+	* tensorflow
+	* wie training
+	* welcher optimizer
+	* data split
+	*
+
+#### Code
 * Data pipe für die Plots
+* Wie hoch Anteil richtig klassifiziert
+* plots auch auf gesammten Dataset
+* shell script parameter verändern
+	* datapipe
+* umschreiben + comments
+* abbruchbend
+* trainingtime
+* verschiedene cuts
+* in classe packen
+* activation function neural net
 
 ### Tex
 
