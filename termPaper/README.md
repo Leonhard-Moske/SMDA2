@@ -36,9 +36,8 @@
 	*
 
 #### Code
+* vertical line at cut
 * Data pipe für die Plots
-* Wie hoch Anteil richtig klassifiziert
-* plots auch auf gesammten Dataset
 * shell script parameter verändern
 	* datapipe
 * umschreiben + comments
