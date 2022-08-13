@@ -4,12 +4,11 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
 import os
-import random
 import astroML.datasets
 from sklearn.metrics import roc_curve
 import keras.layers as kl
-import keras
 from keras import Model 
+import sys
 
 
 tfd = tfp.distributions
@@ -232,7 +231,29 @@ n_hidden = [100, 100, 100, 100]
 
 base_lr = 1e-3
 end_lr = 1e-4
-max_epochs = [int(20), int(200)]  # maximum number of epochs of the training
+max_epochs = [int(60), int(400)]  # maximum number of epochs of the training
+
+break_req = 1e-5
+
+cut = 0
+
+args = sys.argv
+
+print(args)
+if len(args) > 1:
+    batchsizes = [int(args[1]), int(args[2])]
+    cut = float(args[3])
+    hidden_shape = [int(args[4])]*int(args[5])
+    n_hidden = [int(args[6])]*int(args[7])
+    base_lr = float(args[8])
+    end_lr = float(args[9])
+    layers = int(args[10])
+
+    params = [batchsizes, cut, hidden_shape, n_hidden, base_lr, end_lr, layers]
+    # batchsize0 batchsize1 cut hidden_shape_width hidden_shape_depth n_hidden_width n_hidden_depth base_lr end_lr layers 
+
+print(batchsizes, cut, hidden_shape, n_hidden, base_lr, end_lr, layers)
+
 
 #------------------------------------------------------------------------------
 
@@ -295,6 +316,9 @@ opt1 = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn1)  # optimizer
 train_losses = [[],[]]
 val_losses = []
 
+test_loss = tf.convert_to_tensor(np.inf, dtype=tf.float32)
+
+startTime0 = time.time()
 
 for i in range(max_epochs[0]):
     print(i)
@@ -302,6 +326,13 @@ for i in range(max_epochs[0]):
         train_loss = train_density_estimation0(flow0, opt0, batch)
     train_losses[0].append(train_loss)
     print(train_loss)
+    if tf.math.abs((test_loss - nll(flow0, batched_test_data0))/(test_loss + nll(flow0, batched_test_data0))) < break_req:
+        print("breaking requirement fulfilled", (test_loss - nll(flow0, batched_test_data0))/(test_loss + nll(flow0, batched_test_data0)))
+        break
+    test_loss = nll(flow0, batched_test_data0)
+    
+test_loss = tf.convert_to_tensor(np.inf, dtype=tf.float32)
+startTime1 = time.time()
 
 for i in range(max_epochs[1]):
     print(i)
@@ -309,6 +340,16 @@ for i in range(max_epochs[1]):
         train_loss = train_density_estimation1(flow1, opt1, batch)
     train_losses[1].append(train_loss)
     print(train_loss)
+    if tf.math.abs((test_loss - nll(flow1, batched_test_data1))/(test_loss + nll(flow1, batched_test_data1))) < break_req:
+        print("breaking requirement fulfilled")
+        break
+    test_loss = nll(flow1, batched_test_data1)
+
+endTraining = time.time()
+
+print(startTime1- startTime0)
+print(endTraining- startTime1)
+
 
 #------------------------------------------------------------------------------
 
@@ -324,7 +365,7 @@ def proportionRight(data, signal, flow0, flow1, cut= 0): #returns proportion of 
     return (n1right + n0right)/len(signal)
 
 
-print(proportionRight(tf.concat([batched_val_data0, batched_val_data1], axis = 0),np.concatenate((np.zeros(len(batched_val_data0)),np.ones(len(batched_val_data1)))), flow0, flow1))
+print(proportionRight(tf.concat([batched_val_data0, batched_val_data1], axis = 0),np.concatenate((np.zeros(len(batched_val_data0)),np.ones(len(batched_val_data1)))), flow0, flow1, cut))
 
 validation0=classify(flow0, flow1, batched_val_data0)
 validation1=classify(flow0, flow1, batched_val_data1)
@@ -343,8 +384,9 @@ plt.title("validation response")
 plt.hist(validation0.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"background; entries: {len(validation0)}")
 plt.hist(validation1.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"signal; entries: {len(validation1)}")
 plt.xlabel(r"$\frac{\ln(flow_0)}{\ln(flow_1)}$")
-plt.legend()
 plt.yscale("log")
+plt.axvline(x=cut, color="r", label="cut", lw= 0.5)
+plt.legend()
 plt.savefig("figs/fracln_validation_hist.png", format="png")
 plt.clf()
 
@@ -353,6 +395,7 @@ plt.title("whole data response")
 plt.hist(dataResp0.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"background; entries: {len(dataResp0)}")
 plt.hist(dataResp1.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"signal; entries: {len(dataResp1)}")
 plt.xlabel(r"$\frac{\ln(flow_0)}{\ln(flow_1)}$")
+plt.axvline(x=cut, color="r", label="cut", lw= 0.5)
 plt.legend()
 plt.yscale("log")
 plt.savefig("figs/fracln_data_hist.png", format="png")
@@ -389,3 +432,14 @@ plt.ylabel("training loss")
 plt.legend()
 plt.savefig("figs/training_loss_1.png", format="png")
 plt.clf()
+
+if len(args) > 1:
+    plt.title("whole data response")
+    plt.hist(dataResp0.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"background; entries: {len(dataResp0)}")
+    plt.hist(dataResp1.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"signal; entries: {len(dataResp1)}")
+    plt.xlabel(r"$\frac{\ln(flow_0)}{\ln(flow_1)}$")
+    plt.axvline(x=cut, color="r", label="cut", lw= 0.5)
+    plt.legend()
+    plt.yscale("log")
+    plt.savefig(f"varOut/hist_{'_'.join(str(e) for e in params)}.png", format="png")
+    plt.clf()
