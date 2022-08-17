@@ -129,11 +129,26 @@ We achieve invertibility and differentiability of $f$ if all coupling layers $f_
 	\ln\left|\text{det}J_{f^{-1}}(x)\right| &= \ln\left|\prod_{k=0}^{K}\text{det}J_{f_{k}^{-1}}(x_{k-1})\right| \\
 	&= \sum_{k=0}^{K}\ln\left|\text{det}J_{f_{k}^{-1}}(x_{k-1})\right|
 \end{align*}
-Also because the the coupling layers have to be invertible they have to be injective, having the same number of input as output dimensions.
+Also because the the coupling layers have to be invertible they have to be injective, having the same number of input as output dimensions. 
+
+In order to achieve inveribility of $f_k$ we use a method called \textit{freezing} where some variables are changed by the current coupling layer and others are not. 
+\begin{align*}
+	x_{i<j} &\rightarrow g(x_{i<j},s(x_{i\geq j})) = 	x_{i<j}'\\
+	x_{i\geq j} &\rightarrow x_{i\geq j} = x_{i\geq j}'
+\end{align*}
+where $g$ has to be an invertible function, but $s$ does not have to be invertible. We will use artificial neural nets (ANN) to give these transformations the needed expressiveness. The parameter $j$ is dependent on the explicit parametrization of $f_k$. Between the coupling layers the features are permuted so that all are being transformed or have influence on the transformation.
+
+The inverse of this is then
+\begin{align*}
+	x_{i<j}' &\rightarrow g^{-1}(x_{i<j}',s(x_{i\geq j}')) = x_{i<j}\\
+	x_{i\geq j}' &\rightarrow x_{i\geq j}' = x_{i\geq j}
+\end{align*}
+
+Because of this \textit{freezing} the Jacobian determinant has a sparse form and can be easily computed, but is dependent on the explicit implementation.
 \todo{citations}
 \todo{picutre normalizing flows}
 \todo{lower triangular form}
-\todo{freezing}
+
 
 
 \subsection{training the transformation}
@@ -150,8 +165,20 @@ In this case where we have samples of the target distribution it is suitable to 
 where the $x_n$ are the sampled target data. Thus we have to be able to compute $f^{-1}$, its jacobian determinant and evaluate $r(z)$ and since we want do use gradient descend we need to differentiate through them. \todo{citation}
 
 \section{Normalizing flow categories}
-list of different parametrizations -> all requirements in subsection
-\todo{versch. NF erklären}
+The two normalizing flow parameterizations we used are a Masked Autoencoder \todo{citation}, provided by the tensorflow library and a Real NVP \todo{citation}. 
+\todo{Masked autoencoder}
+The transformation of the Real NVP is: \todo{bold for vectors}
+\begin{align*}
+	x_{0...\frac{d-1}{2}} &\rightarrow \alpha \cdot x_{0...\frac{d}{2}} + \beta\\
+	x_{\frac{d-1}{2}...d} &\rightarrow x_{\frac{d}{2}...d} \\
+	\alpha &= s(x_{\frac{d}{2}...d-1}) \hspace{1cm} \beta = s(x_{\frac{d}{2}...d})
+\end{align*}
+where $d$ is the number of features and $s$ is a fully connected neural net with \textit{ReLU} activation functions. The last layer of the scale $\alpha$ is activated with $\tanh$ while the shift $\beta$ is linear activated.
+Then the Jacobian determinant is:
+\begin{align*}
+	\ln\left|\text{det}J_{f_{k}^{-1}}(x_{k-1})\right| = \sum_{i=0}^{\frac{d}{2}} \ln(\alpha_i)
+\end{align*}
+Between these transformations we apply a permutation as (0123).
 
 
 \section{Methods}

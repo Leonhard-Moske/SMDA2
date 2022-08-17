@@ -36,14 +36,9 @@
 	*
 
 #### Code
-* vertical line at cut
-* Data pipe für die Plots
-* shell script parameter verändern
-	* datapipe
+* zeit und class resp in text file
+* auswerungsscript
 * umschreiben + comments
-* abbruchbend
-* trainingtime
-* verschiedene cuts
 * in classe packen
 * activation function neural net
 
