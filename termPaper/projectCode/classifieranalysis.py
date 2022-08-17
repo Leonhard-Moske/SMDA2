@@ -233,7 +233,7 @@ base_lr = 1e-3
 end_lr = 1e-4
 max_epochs = [int(60), int(400)]  # maximum number of epochs of the training
 
-break_req = 1e-5
+break_req = 1e-6
 
 cut = 0
 
@@ -314,36 +314,42 @@ opt1 = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn1)  # optimizer
 
 
 train_losses = [[],[]]
-val_losses = []
+number_steps = [0,0]
 
 test_loss = tf.convert_to_tensor(np.inf, dtype=tf.float32)
 
 startTime0 = time.time()
 
 for i in range(max_epochs[0]):
-    print(i)
+    print("training step: ",i)
     for batch in train_data_batched0:
         train_loss = train_density_estimation0(flow0, opt0, batch)
     train_losses[0].append(train_loss)
-    print(train_loss)
+    tf.print("flow 0 training loss: ",train_loss, output_stream=sys.stdout)
     if tf.math.abs((test_loss - nll(flow0, batched_test_data0))/(test_loss + nll(flow0, batched_test_data0))) < break_req:
-        print("breaking requirement fulfilled", (test_loss - nll(flow0, batched_test_data0))/(test_loss + nll(flow0, batched_test_data0)))
+        print("breaking requirement fulfilled")
+        number_steps[0] = i
         break
     test_loss = nll(flow0, batched_test_data0)
+    number_steps[0] = i
+
     
 test_loss = tf.convert_to_tensor(np.inf, dtype=tf.float32)
 startTime1 = time.time()
 
 for i in range(max_epochs[1]):
-    print(i)
+    print("training step: ",i)
     for batch in train_data_batched1:
         train_loss = train_density_estimation1(flow1, opt1, batch)
     train_losses[1].append(train_loss)
-    print(train_loss)
+    tf.print("flow 1 training loss: ",train_loss, output_stream=sys.stdout)
     if tf.math.abs((test_loss - nll(flow1, batched_test_data1))/(test_loss + nll(flow1, batched_test_data1))) < break_req:
         print("breaking requirement fulfilled")
+        number_steps[1] = i
         break
     test_loss = nll(flow1, batched_test_data1)
+    number_steps[1] = i
+
 
 endTraining = time.time()
 
@@ -365,7 +371,8 @@ def proportionRight(data, signal, flow0, flow1, cut= 0): #returns proportion of 
     return (n1right + n0right)/len(signal)
 
 
-print(proportionRight(tf.concat([batched_val_data0, batched_val_data1], axis = 0),np.concatenate((np.zeros(len(batched_val_data0)),np.ones(len(batched_val_data1)))), flow0, flow1, cut))
+propRight = proportionRight(tf.concat([batched_val_data0, batched_val_data1], axis = 0),np.concatenate((np.zeros(len(batched_val_data0)),np.ones(len(batched_val_data1)))), flow0, flow1, cut)
+print(propRight)
 
 validation0=classify(flow0, flow1, batched_val_data0)
 validation1=classify(flow0, flow1, batched_val_data1)
@@ -385,7 +392,7 @@ plt.hist(validation0.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label 
 plt.hist(validation1.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"signal; entries: {len(validation1)}")
 plt.xlabel(r"$\frac{\ln(flow_0)}{\ln(flow_1)}$")
 plt.yscale("log")
-plt.axvline(x=cut, color="r", label="cut", lw= 0.5)
+plt.axvline(x=cut, color="r", label=f"cut: {cut}", lw= 0.5)
 plt.legend()
 plt.savefig("figs/fracln_validation_hist.png", format="png")
 plt.clf()
@@ -395,7 +402,7 @@ plt.title("whole data response")
 plt.hist(dataResp0.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"background; entries: {len(dataResp0)}")
 plt.hist(dataResp1.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"signal; entries: {len(dataResp1)}")
 plt.xlabel(r"$\frac{\ln(flow_0)}{\ln(flow_1)}$")
-plt.axvline(x=cut, color="r", label="cut", lw= 0.5)
+plt.axvline(x=cut, color="r", label=f"cut: {cut}", lw= 0.5)
 plt.legend()
 plt.yscale("log")
 plt.savefig("figs/fracln_data_hist.png", format="png")
@@ -407,6 +414,7 @@ plt.xlabel("1 - purity eg. error rate")
 plt.ylabel("efficiency")
 plt.savefig("figs/ROC_validation.png", format="png")
 plt.clf()
+
 
 plt.title("training loss function values")
 plt.plot(train_losses[0], label="flow0")
@@ -434,12 +442,22 @@ plt.savefig("figs/training_loss_1.png", format="png")
 plt.clf()
 
 if len(args) > 1:
+    import csv
+
     plt.title("whole data response")
     plt.hist(dataResp0.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"background; entries: {len(dataResp0)}")
     plt.hist(dataResp1.numpy(), range=plotranges, alpha = 0.7 ,  bins= 500, label = f"signal; entries: {len(dataResp1)}")
     plt.xlabel(r"$\frac{\ln(flow_0)}{\ln(flow_1)}$")
-    plt.axvline(x=cut, color="r", label="cut", lw= 0.5)
+    plt.axvline(x=cut, color="r", label=f"cut: {cut}", lw= 0.5)
     plt.legend()
     plt.yscale("log")
     plt.savefig(f"varOut/hist_{'_'.join(str(e) for e in params)}.png", format="png")
     plt.clf()
+
+    with open('varOut/parameterVariationOut.csv', 'a') as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=',')
+        args= np.array(args[1:])
+        args = args.astype(float)
+        # TODO number of steps
+        line = list(args) + [propRight, startTime1- startTime0 ,endTraining - startTime1, train_losses[0][0].numpy(), train_losses[1][0].numpy(), number_steps[0], number_steps[1]]
+        csv_writer.writerow(line)

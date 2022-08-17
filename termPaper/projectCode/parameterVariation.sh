@@ -1,4 +1,5 @@
 #!/bin/bash
+# script for variing choosen parameter of the classifiers 
 
 cd ~/Documents/SMDA2/SMDA2/termPaper/projectCode
 
