@@ -98,6 +98,7 @@ To demonstrate the functionality of normalizing flows we investigate the \textit
 
 
 \section{Theory}
+\label{sec:theory 1}
 To classify data into different categories (background and signal) using the density of these categories we have to evaluate the probability density distributions at the data and compare the result, i.e. choose the category with the highest probability. In this case we have only two categories (background named 0, signal named 1), thus we can use a test statistic like:
 \begin{align*}
 	t(\text{data}) = \ln(\frac{p(0|\text{data})}{p(1|\text{data})})
@@ -118,6 +119,7 @@ We call $r(z)$ the base distribution and $q(x)$ the target distribution.
 To get a density estimation of new data $x'$ with some parameters we would vary $\theta$ until $q(x)$ is close to the target distribution of the data $p(x)$, then we can compute $r(f^{-1}(x'|\mathbf{\theta}))\left|\text{det}J_f(x'|\mathbf{\theta})\right|$ which is the estimate for the probability of the data. To do this we have to be able to compute the inverse transformation, its Jacobian determinant and evaluate the base distribution. As the base distribution we choose a multidimensional normal distribution. The dimension of this distribution is the number of features since the flow $f$ has to be injective.
 \todo{citations}
 \subsection{parameterize the transformation}
+\label{sec:param trafo}
 To achieve the needed expressiveness of the transformation we construct it by composing smaller so called coupling layers:
 \begin{align*}
 	f &= f_0 \circ f_1 \circ ... \circ f_K \hspace{1cm} k=0,1...K \\
@@ -178,25 +180,23 @@ Then the Jacobian determinant is:
 \begin{align*}
 	\ln\left|\text{det}J_{f_{k}^{-1}}(x_{k-1})\right| = \sum_{i=0}^{\frac{d}{2}} \ln(\alpha_i)
 \end{align*}
-Between these transformations we apply a permutation as (0123).
+Between these transformations we apply the permutation (0123) of the features.
+
+
 
 
 \section{Methods}
-training testing val split
+We use the tensorflow library to build the normalizing flows. Especially essential are the bijector and distribution classes of the probability module.
+We split the data into signal and background, and further into training, testing and validation subsets.
+These contain 80\%, 10\% and 10\% of the data. The training data is divided into batches.
+As the base distribution $r(z)$ we choose a multidimensional normal distribution.
+The transformation is implemented as a \textit{ tensorflow Chain} of \textit{ tensorflow bijectors}. These bijectors are the coupling layers and the permutation from section \ref{sec:param trafo}.  
+All bijectors have forward, inverse and logarithmic Jacobian determinate.
+For training the flow we iterate over all batches and apply the gradient of the loglikelihood with the adams optimizer using \textit{tensorflow GradientTape}. The learning rate decays from a set initial value to a set final value with a polynomial decay with power $\frac{1}{2}$. \todo{citation luRi}
 
-fixed base dist
-
-tendorflow bijectors
-
-how training (train utils)
-
-adam optimizer
-
-implementation mit tensorflow. citation LUKAS...
-\todo{training erklären}
-how checking (roc und hist der t und fraction of richtig class)
-\todo{wie classifier bzw. was für auswertungen}
-
+For evaluating the validity of the model we calculate the test statistic $t$ from section \ref{sec:theory 1}, also we calculate the fraction of correctly classified data from the validation data given some cut and we look at the ROC-Curve of the test statistic.
+\todo{maybe traiing time variing parameter}
+\todo{plots das kann man ja nicht lesen...}
 
 
 \section{Results}
