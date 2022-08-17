@@ -36,8 +36,7 @@
 	*
 
 #### Code
-* zeit und class resp in text file
-* auswerungsscript
+* plots in auswertungsscript
 * umschreiben + comments
 * in classe packen
 * activation function neural net
