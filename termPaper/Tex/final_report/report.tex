@@ -149,7 +149,6 @@ The inverse of this is then
 Because of this \textit{freezing} the Jacobian determinant has a sparse form and can be easily computed, but is dependent on the explicit implementation.
 \todo{citations}
 \todo{picutre normalizing flows}
-\todo{lower triangular form}
 
 
 
@@ -167,13 +166,13 @@ In this case where we have samples of the target distribution it is suitable to 
 where the $x_n$ are the sampled target data. Thus we have to be able to compute $f^{-1}$, its jacobian determinant and evaluate $r(z)$ and since we want do use gradient descend we need to differentiate through them. \todo{citation}
 
 \section{Normalizing flow categories}
-The two normalizing flow parameterizations we used are a Masked Autoencoder \todo{citation}, provided by the tensorflow library and a Real NVP \todo{citation}. 
+The two normalizing flow parameterizations we used are a Masked Autoencoder (\textbf{MADE}) \todo{citation}, provided by the tensorflow library and a Real NVP \todo{citation}. 
 \todo{Masked autoencoder}
 The transformation of the Real NVP is: \todo{bold for vectors}
 \begin{align*}
-	x_{0...\frac{d-1}{2}} &\rightarrow \alpha \cdot x_{0...\frac{d}{2}} + \beta\\
-	x_{\frac{d-1}{2}...d} &\rightarrow x_{\frac{d}{2}...d} \\
-	\alpha &= s(x_{\frac{d}{2}...d-1}) \hspace{1cm} \beta = s(x_{\frac{d}{2}...d})
+	x_{0...\frac{d-1}{2}} &\rightarrow \alpha \cdot x_{0...\frac{d-1}{2}} + \beta\\
+	x_{\frac{d-1}{2}...d-1} &\rightarrow x_{\frac{d-1}{2}...d-1} \\
+	\alpha &= s(x_{\frac{d-1}{2}...d-1}) \hspace{1cm} \beta = s(x_{\frac{d-1}{2}...d-1})
 \end{align*}
 where $d$ is the number of features and $s$ is a fully connected neural net with \textit{ReLU} activation functions. The last layer of the scale $\alpha$ is activated with $\tanh$ while the shift $\beta$ is linear activated.
 Then the Jacobian determinant is:
@@ -191,8 +190,10 @@ We split the data into signal and background, and further into training, testing
 These contain 80\%, 10\% and 10\% of the data. The training data is divided into batches.
 As the base distribution $r(z)$ we choose a multidimensional normal distribution.
 The transformation is implemented as a \textit{ tensorflow Chain} of \textit{ tensorflow bijectors}. These bijectors are the coupling layers and the permutation from section \ref{sec:param trafo}.  
-All bijectors have forward, inverse and logarithmic Jacobian determinate.
-For training the flow we iterate over all batches and apply the gradient of the loglikelihood with the adams optimizer using \textit{tensorflow GradientTape}. The learning rate decays from a set initial value to a set final value with a polynomial decay with power $\frac{1}{2}$. \todo{citation luRi}
+All bijectors have methods for computing the forward transformation, inverse of the transformation and the logarithmic Jacobian determinate.
+For training the flow we iterate over all batches and apply the gradient of the loglikelihood with the adams optimizer using \textit{tensorflow GradientTape}. The learning rate decays from a set initial value to a set final value with a polynomial decay with power $\frac{1}{2}$.
+We train the models until the relative change of the loss function on the testing data is bellow \SI{1e-8}.
+ \todo{citation luRi}
 
 For evaluating the validity of the model we calculate the test statistic $t$ from section \ref{sec:theory 1}, also we calculate the fraction of correctly classified data from the validation data given some cut and we look at the ROC-Curve of the test statistic.
 \todo{maybe traiing time variing parameter}
@@ -200,13 +201,64 @@ For evaluating the validity of the model we calculate the test statistic $t$ fro
 
 
 \section{Results}
+We first trained the models on default parameters, listed in table \ref{tab: defparams}. Since the number of background entries and signal entries differ greatly we used different batchsizes. The cut specifies at which value of the test statistic $t$ we classify a data point as background or signal. Layers determines how many coupling layers and permutations make up the model. There are also model specific parameters which control the shape of the \textbf{ANN}s.
+
+
+\begin{table}
+	\centering
+	\begin{tabular}{|l|l|l|l|}
+		\hline  
+		\multicolumn{2}{|c|}{\textbf{parameter}}&	\multicolumn{2}{c|}{\textbf{value}} \\
+		\hline
+		\multicolumn{2}{|c|}{batchsize 0}&	\multicolumn{2}{c|}{1000} \\
+		\hline
+		\multicolumn{2}{|c|}{batchsize 1}&	\multicolumn{2}{c|}{100} \\
+		\hline
+		\multicolumn{2}{|c|}{cut}&	\multicolumn{2}{c|}{0} \\
+		\hline
+		\multicolumn{2}{|c|}{start learningrate}&	\multicolumn{2}{c|}{\SI{1e-3}} \\
+		\hline
+		\multicolumn{2}{|c|}{final learningrate}&	\multicolumn{2}{c|}{\SI{1e-4}} \\
+		\hline
+		\multicolumn{2}{|c|}{layers}&	\multicolumn{2}{c|}{8} \\
+		\hline
+		\hline
+		\multicolumn{2}{|c|}{\textbf{MADE}} & \multicolumn{2}{c|}{\textbf{Real NVP}}\\
+		\hline
+		nodes per hidden layer & 200 & nodes per hidden layer & 100\\
+		\hline
+		number of hidden layers& 2 & number of hidden layers & 4\\
+		\hline
+	\end{tabular}
+	\caption{Default parameters for the normalizing flow models and training \label{tab: defparams}}
+\end{table}
+
+The both models result in histograms of the test statistic as in \ref{fig:histboth modl}
+\todo{hists side by side}
+We can see that both models deliver a negative response for the signal. For the background we observe that most of the data has a positive test statistic $t$, thus a classification of signal and background with a cut at $t=0$ is possible. But we also notice that then some background data is classified as signal, making a complete classification impossible. With a cut of 0 the proportion of correctly classified events is: ??,??
+\todo{class respons}. 
+
+For different cuts we look at the ROC-curves of both models
+\todo{ROC-Curves}
+Because of the amount of background the curves are very sensitive.
+
+In figure \ref{fig:istep} we have the histograms of the test statistic after the ?th step of training, we can observe the difference to the end result. \todo{fig:istep}
+
+hist before during (after ith step) and after training klingt nice
+
+table of defaults
+
 loss function over time
 
 hist of test stat der versch nf. 
 
 plot der fraction of richtig class
+abh von nf und anderen params (layers, )
 
-vllt plot prob density
+plot der Zeit
+
+ROC curve (da vllt noch mal dran schrauben)
+
 
 \section{Summary}
 
