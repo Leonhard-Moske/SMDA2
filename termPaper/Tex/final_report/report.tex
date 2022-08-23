@@ -38,6 +38,8 @@
 \usepackage{bm}% bold math
 \usepackage{todonotes}
 \usepackage{siunitx}
+\usepackage{subcaption}
+\usepackage{mwe}
 
 %\usepackage{hyperref}% add hypertext capabilities
 %\usepackage[mathlines]{lineno}% Enable numbering of text and display math
@@ -91,10 +93,76 @@ In this paper, the expressiveness of fully connected neural networks is used in 
 \section{Introduction}
 Normalizing flows is a powerful method that utilizes the transformation of random variables for either density estimation or for generative sampling.
 
-To demonstrate the functionality of normalizing flows we investigate the \textit{AstroML RR-Lyrae variable stars data}-dataset which contains a record of \textit{RR-Lyrae variable stars}, which are periodic variable stars, found in globular cluster, that serve as standard candles to measure extra galactic distances. The features provided are four intensities at different wavelength filters corresponding to the photometric system. The four features are: $\left\{u-g, g-r, r-i, i-z\right\}$, where $u$ is at $\SI{365}{nm}$, $g$ at \SI{464}{nm}, $r$ at \SI{658}{nm}, $i$ at \SI{806}{nm} and $z$ at \SI{900}{nm}. The dataset contains background stars \todo{statistic of signal and background} further named background and the \textit{RR-Lyrae variable stars}, which we are going to call signal.
-\todo{diagram spectrum google: u g r i z wavelength filter  astrology}
+To demonstrate the functionality of normalizing flows we investigate the \textit{AstroML RR-Lyrae variable stars data}-dataset which contains a record of \textit{RR-Lyrae variable stars}. These are periodic variable stars, found in globular cluster, that serve as standard candles to measure extra galactic distances. The data was taken at the \textit{Sloan Digital Sky Survey (SDSS)}.
+ The features provided are four intensities at different wavelength filters corresponding to the photometric system. The four features are: $\left\{u-g, g-r, r-i, i-z\right\}$, where $u$ is at $\SI{355}{nm}$, $g$ at \SI{468}{nm}, $r$ at \SI{616}{nm}, $i$ at \SI{748}{nm} and $z$ at \SI{893}{nm}, Figure~\ref{fig:filterResp}. The dataset contains background stars further named background and the \textit{RR-Lyrae variable stars}, which we are going to call signal. The number of background entries is \SI{92658}{} and of the signal \SI{483}{}.
+ In figure \ref{fig:features} we see the features of signal and background and we can see that the features of the signal are grouped within the range of all feature values, making a classification easier. The \textit{Kolmogorov-Smirnov}-test validates this, because all features have scores higher than 0.75, see table \ref{tab:kolmogorov}.
+ 
+ \begin{table}
+ 	\centering
+ 	\begin{tabular}{|l|l|}
+ 		\hline
+		feature & score\\
+		\hline
+		$u-g$& 0.80\\
+		$g-r$& 0.94\\
+		$r-i$& 0.91\\
+		$i-z$& 0.76\\
+		\hline
+ 	\end{tabular}
+ 	\caption{Kolmogorov-Smirnov score of the four features \label{tab:kolmogorov}}
+ \end{table}
+ 
+ 
+ \begin{figure}[]
+ 	\centering
+ 	\includegraphics[width=0.4\textwidth]{figs/camera_filters-300x274.jpg}
+ 	\caption{ Filter response to different wavelengths of the \textit{SDSS}-camera. Form left to right the filters are: u, g, r, i and z.
+ 		\label{fig:filterResp}
+ 	}
+ \end{figure}
+ 
+  \begin{figure*}
+ 	\centering
+ 	\begin{subfigure}[b]{0.4\textwidth}
+ 		\centering
+ 		\includegraphics[width=\textwidth]{figs/hist_xData_feature0_labelSplit.png}
+ 		%\caption[feature $u-g$ of the data]%
+ 		%{{\small Network 1}}    
+ 		\label{fig:mean and std of net14}
+ 	\end{subfigure}
+ 	\hfill
+ 	\begin{subfigure}[b]{0.4\textwidth}  
+ 		\centering 
+ 		\includegraphics[width=\textwidth]{figs/hist_xData_feature1_labelSplit.png}
+ 		%\caption[]%
+ 		%{{\small Network 2}}    
+ 		\label{fig:mean and std of net24}
+ 	\end{subfigure}
+ 	\vskip\baselineskip
+ 	\begin{subfigure}[b]{0.4\textwidth}   
+ 		\centering 
+ 		\includegraphics[width=\textwidth]{figs/hist_xData_feature2_labelSplit.png}
+ 		%\caption[]%
+ 		%{{\small Network 3}}    
+ 		\label{fig:mean and std of net34}
+ 	\end{subfigure}
+ 	\hfill
+ 	\begin{subfigure}[b]{0.4\textwidth}   
+ 		\centering 
+ 		\includegraphics[width=\textwidth]{figs/hist_xData_feature3_labelSplit.png}
+ 		%\caption[]%
+ 		%{{\small Network 4}}    
+ 		\label{fig:mean and std of net44}
+ 	\end{subfigure}
+ 	\caption[ histograms of the features with the data split into background and signal ]
+ 	{\small histograms of the features with the data split into background and signal} 
+ 	\label{fig:features}
+ \end{figure*}
+ 
 \todo{citation}
-\todo{hist of features}
+\todo{cite astroml}
+\todo{cite the dataset https://iopscience.iop.org/article/10.1088/0004-637X/708/1/717/meta}
+\todo{https://www.sdss.org/instruments/camera/}
 
 
 \section{Theory}
@@ -106,7 +174,6 @@ To classify data into different categories (background and signal) using the den
 We should classify the data as background if $t>0$ and as signal if $t<0$. In practice this cut has to be chosen with respect to the validation of the classifiers. 
 
 So we have to construct an algorithm that allows us to evaluate the probability density of both categories. 
-\todo{classifier by density estimation: if we have density we can estimate p(signal|background) -> compare all likelyhoods <- check this term}
 \subsection{functions of random variables}
 To estimate the density distribution we make use of the formula of  transformations of random variables, which lets us connect a simple distribution that we can evaluate and the distribution of the data. This allows us to approximate the evaluation of the data density at points, i.e. new data. 
 
@@ -120,7 +187,7 @@ To get a density estimation of new data $x'$ with some parameters we would vary 
 \todo{citations}
 \subsection{parameterize the transformation}
 \label{sec:param trafo}
-To achieve the needed expressiveness of the transformation we construct it by composing smaller so called coupling layers:
+To achieve the needed expressiveness of the transformation we construct it by composing smaller so called coupling layers, see also figure \ref{fig:schemaFlow}:
 \begin{align*}
 	f &= f_0 \circ f_1 \circ ... \circ f_K \hspace{1cm} k=0,1...K \\
 	z_k &= f_k(z_{k-1})\\
@@ -148,8 +215,15 @@ The inverse of this is then
 
 Because of this \textit{freezing} the Jacobian determinant has a sparse form and can be easily computed, but is dependent on the explicit implementation.
 \todo{citations}
-\todo{picutre normalizing flows}
-
+ \begin{figure}[h]
+	\centering
+	\includegraphics[width=0.4\textwidth]{figs/normalizing_flow_layout.png}
+	\caption{ Schemata of "flow" from the base distribution $r(z)$ to $q(x)$
+		\label{fig:schemaFlow}
+	}
+\end{figure}
+\todo{citation picture URL  in comment}
+% https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial11/NF_image_modeling.html
 
 
 \subsection{training the transformation}
@@ -191,15 +265,15 @@ These contain 80\%, 10\% and 10\% of the data. The training data is divided into
 As the base distribution $r(z)$ we choose a multidimensional normal distribution.
 The transformation is implemented as a \textit{ tensorflow Chain} of \textit{ tensorflow bijectors}. These bijectors are the coupling layers and the permutation from section \ref{sec:param trafo}.  
 All bijectors have methods for computing the forward transformation, inverse of the transformation and the logarithmic Jacobian determinate.
+
 For training the flow we iterate over all batches and apply the gradient of the loglikelihood with the adams optimizer using \textit{tensorflow GradientTape}. The learning rate decays from a set initial value to a set final value with a polynomial decay with power $\frac{1}{2}$.
-We train the models until the relative change of the loss function on the testing data is bellow \SI{1e-8}.
+We train the models until the relative change of the loss function on the testing data is bellow \SI{1e-6}.
  \todo{citation luRi}
 
 For evaluating the validity of the model we calculate the test statistic $t$ from section \ref{sec:theory 1}, also we calculate the fraction of correctly classified data from the validation data given some cut and we look at the ROC-Curve of the test statistic.
-\todo{maybe traiing time variing parameter}
-\todo{plots das kann man ja nicht lesen...}
 
-
+\todo{Rewrite Code no LURI}
+\todo{comments code}
 \section{Results}
 We first trained the models on default parameters, listed in table \ref{tab: defparams}. Since the number of background entries and signal entries differ greatly we used different batchsizes. The cut specifies at which value of the test statistic $t$ we classify a data point as background or signal. Layers determines how many coupling layers and permutations make up the model. There are also model specific parameters which control the shape of the \textbf{ANN}s.
 
@@ -233,36 +307,99 @@ We first trained the models on default parameters, listed in table \ref{tab: def
 	\caption{Default parameters for the normalizing flow models and training \label{tab: defparams}}
 \end{table}
 
-The both models result in histograms of the test statistic as in \ref{fig:histboth modl}
-\todo{hists side by side}
-We can see that both models deliver a negative response for the signal. For the background we observe that most of the data has a positive test statistic $t$, thus a classification of signal and background with a cut at $t=0$ is possible. But we also notice that then some background data is classified as signal, making a complete classification impossible. With a cut of 0 the proportion of correctly classified events is: ??,??
-\todo{class respons}. 
+Both models result in histograms of the test statistic as in \ref{fig:histt}
+ \begin{figure*}[ht]
+	\centering
+	\begin{subfigure}[h]{0.475\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figs/fracln_data_hist_Real_NVP.png}
+		%\caption[feature $u-g$ of the data]%
+		%{{\small Network 1}}    
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[h]{0.475\textwidth}  
+		\centering 
+		\includegraphics[width=\textwidth]{figs/fracln_data_hist_MADE.png}
+		%\caption[]%
+		%{{\small Network 2}}    
+	\end{subfigure}
+	\caption[ histograms of the test statistic $t$ for (left) Real NVP (right) MADE ]
+	{\small histograms of the test statistic $t$ for (left) Real NVP (right) MADE} 
+	\label{fig:histt}
+\end{figure*}
+We can see that both models deliver a negative response for the signal. For the background we observe that most of the data has a positive test statistic $t$, thus a classification of signal and background with a cut at $t=0$ is the best cut to minimize false negative classification. But we also notice that then some background data is classified as signal, making a 100 \% accurate classification in this manner unachievable. With a cut of 0 the results of the classification are shown in table \ref{tab: res}, with  
+\begin{align*}
+\text{correctly classified}~&=~\frac{\# \text{true positive}+ \# \text{true negative}}{\# \text{all}}\\ \text{false positive}~&=~\frac{\# \text{false positive}}{\# \text{all}}\\
+\text{false negative}~&=~\frac{\# \text{false negative}}{\# \text{all}}
+\end{align*}
+.
+\begin{table}
+	\centering
+	\begin{tabular}{|l|l|l|}
+		\hline
+		& Real NVP& MADE \\
+		\hline
+		correctly classified & 0.9870  & 0.9831\\
+		\hline
+		false positive &0.0126 & 0.0166 \\
+		\hline
+		false negative &0.0003 & 0.0002\\
+		\hline
+	\end{tabular}
+	\caption{Results of the classification for Real NVP and MADE. \label{tab: res}}
+\end{table}
 
-For different cuts we look at the ROC-curves of both models
-\todo{ROC-Curves}
-Because of the amount of background the curves are very sensitive.
+For different cuts we look at the ROC-curves of both models \todo{ROC beschr}
+ \begin{figure*}[ht]
+	\centering
+	\begin{subfigure}[h]{0.4\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figs/ROC_validation_Real_NVP.png}
+		%\caption[feature $u-g$ of the data]%
+		%{{\small Network 1}}    
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[h]{0.4\textwidth}  
+		\centering 
+		\includegraphics[width=\textwidth]{figs/ROC_validation_MADE.png}
+		%\caption[]%
+		%{{\small Network 2}}    
+	\end{subfigure}
+	\caption[ ROC-Curve of the Real NVP (left) and MADE (right)]
+	{\small ROC-Curve of the Real NVP (left) and MADE (right)} 
+	\label{fig:ROC}
+\end{figure*}
 
-In figure \ref{fig:istep} we have the histograms of the test statistic after the ?th step of training, we can observe the difference to the end result. \todo{fig:istep}
+\todo{Loss beschr}
 
-hist before during (after ith step) and after training klingt nice
-
-table of defaults
-
-loss function over time
-
-hist of test stat der versch nf. 
-
-plot der fraction of richtig class
-abh von nf und anderen params (layers, )
-
-plot der Zeit
-
-ROC curve (da vllt noch mal dran schrauben)
+ \begin{figure*}[ht]
+	\centering
+	\begin{subfigure}[h]{0.4\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figs/training_loss_0_Real_NVP.png}
+		%\caption[feature $u-g$ of the data]%
+		%{{\small Network 1}}    
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[h]{0.4\textwidth}  
+		\centering 
+		\includegraphics[width=\textwidth]{figs/training_loss_1_Real_NVP.png}
+		%\caption[]%
+		%{{\small Network 2}}    
+	\end{subfigure}
+	\caption[ loss function over time on the training data]
+	{\small loss function over time on the training data} 
+	\label{fig:losst}
+\end{figure*}
 
 
 \section{Summary}
+\todo{Summary}
 
 \section{Conclusion}
+\todo{conclusion}
+what left to do
+
 
 \bibliography{biblio.bibtex}
 \todo{quellen raussuchen bzw. hier verweisen}
