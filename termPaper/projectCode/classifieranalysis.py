@@ -225,17 +225,19 @@ train_split = 0.8
 val_split = 0.1
 batchsizes = [1000, 100]
 
-hidden_shape= [200, 200]
+hidden_shape= [200, 200] # MADE
 layers = 8
-n_hidden = [100, 100, 100, 100]
+n_hidden = [100, 100, 100, 100] # REAL NVP
 
 base_lr = 1e-3
 end_lr = 1e-4
 max_epochs = [int(60), int(400)]  # maximum number of epochs of the training
+figatI = 2
 
-break_req = 1e-6
+break_req = 1e-8
 
 cut = 0
+
 
 args = sys.argv
 
@@ -367,12 +369,18 @@ def classify(dist1, dist2, data): #returns the test statistic ln(p1(data)/p2(dat
 def proportionRight(data, signal, flow0, flow1, cut= 0): #returns proportion of correct classified data
     response = classify(flow0, flow1, data)
     n1right = np.count_nonzero(np.logical_and((response < cut), (signal == 1)))
+    n1wrong = np.count_nonzero(np.logical_and((response < cut), (signal == 0)))
     n0right = np.count_nonzero(np.logical_and((response > cut), (signal == 0)))
-    return (n1right + n0right)/len(signal)
+    n0wrong = np.count_nonzero(np.logical_and((response > cut), (signal == 1)))
+    return (n1right + n0right)/len(signal), n1right/len(signal), n1wrong/len(signal), n0right/len(signal), n0wrong/len(signal)
 
 
-propRight = proportionRight(tf.concat([batched_val_data0, batched_val_data1], axis = 0),np.concatenate((np.zeros(len(batched_val_data0)),np.ones(len(batched_val_data1)))), flow0, flow1, cut)
-print(propRight)
+propRight, n1right, n1wrong, n0right, n0wrong = proportionRight(tf.concat([batched_val_data0, batched_val_data1], axis = 0),np.concatenate((np.zeros(len(batched_val_data0)),np.ones(len(batched_val_data1)))), flow0, flow1, cut)
+print("correct classified: ",propRight)
+print("false positive: ", n1wrong)
+print("false negative: ", n0wrong)
+
+
 
 validation0=classify(flow0, flow1, batched_val_data0)
 validation1=classify(flow0, flow1, batched_val_data1)
@@ -408,7 +416,7 @@ plt.yscale("log")
 plt.savefig("figs/fracln_data_hist.png", format="png")
 plt.clf()
 
-roc = roc_curve(np.concatenate((np.zeros(len(validation0)),np.ones(len(validation1)))),tf.concat([validation0, validation1], axis = 0).numpy(),pos_label=1, drop_intermediate=False)
+roc = roc_curve(np.concatenate((np.zeros(len(validation0)),np.ones(len(validation1)))),tf.concat([validation0, validation1], axis = 0).numpy(),pos_label=1, drop_intermediate=True)
 plt.plot(roc[0],roc[1])
 plt.xlabel("1 - purity eg. error rate")
 plt.ylabel("efficiency")
