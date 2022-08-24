@@ -1,2 +1,78 @@
-@CONTROL{REVTEX42Control}
-@CONTROL{apsrev42Control,author="08",editor="1",pages="0",title="0",year="1"}
+@INPROCEEDINGS{astroML,
+  author={{Vanderplas}, J.T. and {Connolly}, A.J.
+          and {Ivezi{\'c}}, {\v Z}. and {Gray}, A.},
+  booktitle={Conference on Intelligent Data Understanding (CIDU)},
+  title={Introduction to astroML: Machine learning for astrophysics},
+  month={oct.},
+  pages={47 -54},
+  doi={10.1109/CIDU.2012.6382200},
+  year={2012}
+}
+
+@misc{rgbSpec,
+  author = {SSDS},
+  title = {The SDSS-III camera filter throughput curves},
+  howpublished = "\url{www.sdss.org/instruments/camera/}",
+  year = {1998}, 
+  note = "[Online; accessed 24-Aug-2022]"
+}
+
+@article{Sesar_2009,
+	doi = {10.1088/0004-637x/708/1/717},
+	url = {https://doi.org/10.1088/0004-637x/708/1/717},
+	year = 2009,
+	month = {dec},
+	publisher = {American Astronomical Society},
+	volume = {708},
+	number = {1},
+	pages = {717--741},
+	author = {Branimir Sesar and {\v{Z}}eljko Ivezi{\'{c}} and Skyler H. Grammer and Dylan P. Morgan and Andrew C. Becker and Mario Juri{\'{c}} and Nathan De Lee and James Annis and Timothy C. Beers and Xiaohui Fan and Robert H. Lupton and James E. Gunn and Gillian R. Knapp and Linhua Jiang and Sebastian Jester and David E. Johnston and Hubert Lampeitl},
+	title = {{LIGHT} {CURVE} {TEMPLATES} {AND} {GALACTIC} {DISTRIBUTION} {OF} {RR} {LYRAE} {STARS} {FROM} {SLOAN} {DIGITAL} {SKY} {SURVEY} {STRIPE} 82},
+	journal = {The Astrophysical Journal},
+	abstract = {We present an improved analysis of halo substructure traced by RR Lyrae stars in the Sloan Digital Sky Survey (SDSS) stripe 82 region. With the addition of SDSS-II data, a revised selection method based on new ugriz light curve templates results in a sample of 483 RR Lyrae stars that is essentially free of contamination. The main result from our first study persists: the spatial distribution of halo stars at galactocentric distances 5–100 kpc is highly inhomogeneous. At least 20% of halo stars within 30 kpc from the Galactic center can be statistically associated with substructure. We present strong direct evidence, based on both RR Lyrae stars and main-sequence stars, that the halo stellar number density profile significantly steepens beyond a Galactocentric distance of ∼30 kpc, and a larger fraction of the stars are associated with substructure. By using a novel method that simultaneously combines data for RR Lyrae and main-sequence stars, and using photometric metallicity estimates for main-sequence stars derived from deep co-added u-band data, we measure the metallicity of the Sagittarius dSph tidal stream (trailing arm) toward R.A. ∼2h–3h and decl. ∼ 0° to be 0.3 dex higher ([Fe/H] = −1.2) than that of surrounding halo field stars. Together with a similar result for another major halo substructure, the Monoceros stream, these results support theoretical predictions that an early forming, smooth inner halo, is metal-poor compared to high surface brightness material that have been accreted onto a later-forming outer halo. The mean metallicity of stars in the outer halo that are not associated with detectable clumps may still be more metal-poor than the bulk of inner-halo stars, as has been argued from other data sets.}
+}
+
+@article{JMLR:v22:19-1028,
+  author  = {George Papamakarios and Eric Nalisnick and Danilo Jimenez Rezende and Shakir Mohamed and Balaji Lakshminarayanan},
+  title   = {Normalizing Flows for Probabilistic Modeling and Inference},
+  journal = {Journal of Machine Learning Research},
+  year    = {2021},
+  volume  = {22},
+  number  = {57},
+  pages   = {1--64},
+  url     = {http://jmlr.org/papers/v22/19-1028.html}
+}
+
+@misc{nfSchema,
+  author = {Phillip Lippe},
+  title = {Tutorial 11: Normalizing Flows for image modeling},
+  howpublished = "\url{https://uvadlc-notebooks.readthedocs.io/en/latest/_images/normalizing_flow_layout.png}", 
+  year = {2022},
+  note = "[Online; accessed 24-Aug-2022]"
+}
+
+@misc{LuRi,
+  author = {Lukas Rinder},
+  title = {Normalizing Flows},
+  howpublished = "\url{https://github.com/LukasRinder/normalizing-flows}", 
+  year = {2020},
+  note = "[Online; accessed 24-Aug-2022]"
+}
+
+@InProceedings{pmlr-v37-germain15,
+  title = 	 {MADE: Masked Autoencoder for Distribution Estimation},
+  author = 	 {Germain, Mathieu and Gregor, Karol and Murray, Iain and Larochelle, Hugo},
+  booktitle = 	 {Proceedings of the 32nd International Conference on Machine Learning},
+  pages = 	 {881--889},
+  year = 	 {2015},
+  editor = 	 {Bach, Francis and Blei, David},
+  volume = 	 {37},
+  series = 	 {Proceedings of Machine Learning Research},
+  address = 	 {Lille, France},
+  month = 	 {07--09 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v37/germain15.pdf},
+  url = 	 {https://proceedings.mlr.press/v37/germain15.html},
+  abstract = 	 {There has been a lot of recent interest in designing neural network models to estimate a distribution from a set of examples. We introduce a simple modification for autoencoder neural networks that yields powerful generative models. Our method masks the autoencoder’s parameters to respect autoregressive constraints: each input is reconstructed only from previous inputs in a given ordering. Constrained this way, the autoencoder outputs can be interpreted as a set of conditional probabilities, and their product, the full joint probability. We can also train a single network that can decompose the joint probability in multiple different orderings. Our simple framework can be applied to multiple architectures, including deep ones. Vectorized implementations, such as on GPUs, are simple and fast. Experiments demonstrate that this approach is competitive with state-of-the-art tractable distribution estimators. At test time, the method is significantly faster and scales better than other autoregressive estimators.}
+}
+

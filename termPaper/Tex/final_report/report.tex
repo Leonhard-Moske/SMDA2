@@ -93,7 +93,7 @@ In this paper, the expressiveness of fully connected neural networks is used in 
 \section{Introduction}
 Normalizing flows is a powerful method that utilizes the transformation of random variables for either density estimation or for generative sampling.
 
-To demonstrate the functionality of normalizing flows we investigate the \textit{AstroML RR-Lyrae variable stars data}-dataset which contains a record of \textit{RR-Lyrae variable stars}. These are periodic variable stars, found in globular cluster, that serve as standard candles to measure extra galactic distances. The data was taken at the \textit{Sloan Digital Sky Survey (SDSS)}.
+To demonstrate the functionality of normalizing flows we investigate the \textit{AstroML RR-Lyrae variable stars data}-dataset \cite{astroML} which contains a record of \textit{RR-Lyrae variable stars} \cite{Sesar_2009}. These are periodic variable stars, found in globular cluster, that serve as standard candles to measure extra galactic distances. The data was taken at the \textit{Sloan Digital Sky Survey (SDSS)}.
  The features provided are four intensities at different wavelength filters corresponding to the photometric system. The four features are: $\left\{u-g, g-r, r-i, i-z\right\}$, where $u$ is at $\SI{355}{nm}$, $g$ at \SI{468}{nm}, $r$ at \SI{616}{nm}, $i$ at \SI{748}{nm} and $z$ at \SI{893}{nm}, Figure~\ref{fig:filterResp}. The dataset contains background stars further named background and the \textit{RR-Lyrae variable stars}, which we are going to call signal. The number of background entries is \SI{92658}{} and of the signal \SI{483}{}.
  In figure \ref{fig:features} we see the features of signal and background and we can see that the features of the signal are grouped within the range of all feature values, making a classification easier. The \textit{Kolmogorov-Smirnov}-test validates this, because all features have scores higher than 0.75, see table \ref{tab:kolmogorov}.
  
@@ -116,7 +116,7 @@ To demonstrate the functionality of normalizing flows we investigate the \textit
  \begin{figure}[]
  	\centering
  	\includegraphics[width=0.4\textwidth]{figs/camera_filters-300x274.jpg}
- 	\caption{ Filter response to different wavelengths of the \textit{SDSS}-camera. Form left to right the filters are: u, g, r, i and z.
+ 	\caption{ Filter response to different wavelengths of the \textit{SDSS}-camera. Form left to right the filters are: u, g, r, i and z. \cite{rgbSpec}
  		\label{fig:filterResp}
  	}
  \end{figure}
@@ -159,11 +159,6 @@ To demonstrate the functionality of normalizing flows we investigate the \textit
  	\label{fig:features}
  \end{figure*}
  
-\todo{citation}
-\todo{cite astroml}
-\todo{cite the dataset https://iopscience.iop.org/article/10.1088/0004-637X/708/1/717/meta}
-\todo{https://www.sdss.org/instruments/camera/}
-
 
 \section{Theory}
 \label{sec:theory 1}
@@ -183,8 +178,8 @@ Let $z$ be a random variable distributed as $r(z)$ then a random variable $x = f
 \end{align*}
 We call $r(z)$ the base distribution and $q(x)$ the target distribution.
 
-To get a density estimation of new data $x'$ with some parameters we would vary $\theta$ until $q(x)$ is close to the target distribution of the data $p(x)$, then we can compute $r(f^{-1}(x'|\mathbf{\theta}))\left|\text{det}J_f(x'|\mathbf{\theta})\right|$ which is the estimate for the probability of the data. To do this we have to be able to compute the inverse transformation, its Jacobian determinant and evaluate the base distribution. As the base distribution we choose a multidimensional normal distribution. The dimension of this distribution is the number of features since the flow $f$ has to be injective.
-\todo{citations}
+To get a density estimation of new data $x'$ with some parameters we would vary $\theta$ until $q(x)$ is close to the target distribution of the data $p(x)$, then we can compute $r(f^{-1}(x'|\mathbf{\theta}))\left|\text{det}J_f(x'|\mathbf{\theta})\right|$ which is the estimate for the probability of the data. To do this we have to be able to compute the inverse transformation, its Jacobian determinant and evaluate the base distribution. As the base distribution we choose a multidimensional normal distribution. The dimension of this distribution is the number of features since the flow $f$ has to be injective. See \cite{JMLR:v22:19-1028}.
+
 \subsection{parameterize the transformation}
 \label{sec:param trafo}
 To achieve the needed expressiveness of the transformation we construct it by composing smaller so called coupling layers, see also figure \ref{fig:schemaFlow}:
@@ -213,17 +208,14 @@ The inverse of this is then
 	x_{i\geq j}' &\rightarrow x_{i\geq j}' = x_{i\geq j}
 \end{align*}
 
-Because of this \textit{freezing} the Jacobian determinant has a sparse form and can be easily computed, but is dependent on the explicit implementation.
-\todo{citations}
+Because of this \textit{freezing} the Jacobian determinant has a sparse form and can be easily computed, but is dependent on the explicit implementation. See \cite{JMLR:v22:19-1028}.
  \begin{figure}[h]
 	\centering
 	\includegraphics[width=0.4\textwidth]{figs/normalizing_flow_layout.png}
 	\caption{ Schemata of "flow" from the base distribution $r(z)$ to $q(x)$
-		\label{fig:schemaFlow}
+		\label{fig:schemaFlow}. \cite{nfSchema}
 	}
 \end{figure}
-\todo{citation picture URL  in comment}
-% https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial11/NF_image_modeling.html
 
 
 \subsection{training the transformation}
@@ -237,11 +229,10 @@ In this case where we have samples of the target distribution it is suitable to 
 	&\approx -\frac{1}{N}\sum_{n=1}^{N}\ln(r(f^{-1}(x_n|\theta))) + \ln\left|\text{det}J_{f^{-1}}(x_n|\theta)\right| + \text{const}
 \end{align*} 
 
-where the $x_n$ are the sampled target data. Thus we have to be able to compute $f^{-1}$, its jacobian determinant and evaluate $r(z)$ and since we want do use gradient descend we need to differentiate through them. \todo{citation}
+where the $x_n$ are the sampled target data. Thus we have to be able to compute $f^{-1}$, its jacobian determinant and evaluate $r(z)$ and since we want do use gradient descend we need to differentiate through them. \cite{LuRi}
 
 \section{Normalizing flow categories}
-The two normalizing flow parameterizations we used are a Masked Autoencoder (\textbf{MADE}) \todo{citation}, provided by the tensorflow library and a Real NVP \todo{citation}. 
-\todo{Masked autoencoder}
+The two normalizing flow parameterizations we used are a Masked Autoencoder (\textbf{MADE}) \cite{pmlr-v37-germain15}, provided by the tensorflow library and a Real NVP \cite{JMLR:v22:19-1028}. 
 The transformation of the Real NVP is: \todo{bold for vectors}
 \begin{align*}
 	x_{0...\frac{d-1}{2}} &\rightarrow \alpha \cdot x_{0...\frac{d-1}{2}} + \beta\\
@@ -268,7 +259,7 @@ All bijectors have methods for computing the forward transformation, inverse of 
 
 For training the flow we iterate over all batches and apply the gradient of the loglikelihood with the adams optimizer using \textit{tensorflow GradientTape}. The learning rate decays from a set initial value to a set final value with a polynomial decay with power $\frac{1}{2}$.
 We train the models until the relative change of the loss function on the testing data is bellow \SI{1e-6}.
- \todo{citation luRi}
+We oriented us closely to \cite{LuRi}.
 
 For evaluating the validity of the model we calculate the test statistic $t$ from section \ref{sec:theory 1}, also we calculate the fraction of correctly classified data from the validation data given some cut and we look at the ROC-Curve of the test statistic.
 
@@ -401,8 +392,7 @@ For different cuts we look at the ROC-curves of both models \todo{ROC beschr}
 what left to do
 
 
-\bibliography{biblio.bibtex}
-\todo{quellen raussuchen bzw. hier verweisen}
+\bibliography{report}
 %
 %\section{\label{sec:level1}First-level heading}
 %
