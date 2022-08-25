@@ -6,5 +6,6 @@ termPaper/Tex/final_report/*.log
 termPaper/Tex/final_report/*.gz
 termPaper/Tex/final_report/*.bbl
 termPaper/Tex/final_report/*.blg
+termPaper/Tex/final_report/*.out
 termPaper/projectCode/figs/*
 termPaper/projectCode/varOut/*

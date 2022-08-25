@@ -64,7 +64,7 @@ def train_density_estimation0(distribution, optimizer, batch):
     :param batch: Batch of the train data.
     :return: loss.
     """
-    with tf.GradientTape() as tape: #Gradient Tape is differentiation
+    with tf.GradientTape() as tape: #Gradient Tape for differentiation
         tape.watch(distribution.trainable_variables) #define variables to differentiate with
         loss = -tf.reduce_mean(distribution.log_prob(batch))  # negative log likelihood
         gradients = tape.gradient(loss, distribution.trainable_variables) # compute gradients of varaibles at loss 
@@ -99,23 +99,6 @@ def nll(distribution, data):
     """
     return -tf.reduce_mean(distribution.log_prob(data))
 
-def plot_heatmap_2d(dist, xmin=-4.0, xmax=4.0, ymin=-4.0, ymax=4.0, mesh_count=1000, name=None):
-    plt.figure()
-    
-    x = tf.linspace(xmin, xmax, mesh_count)
-    y = tf.linspace(ymin, ymax, mesh_count)
-    X, Y = tf.meshgrid(x, y)
-    
-    concatenated_mesh_coordinates = tf.transpose(tf.stack([tf.reshape(Y, [-1]), tf.reshape(X, [-1]), [0.0]*40000, [0.0]*40000])) # 0,0 for 4 dim 
-    prob = dist.prob(concatenated_mesh_coordinates)
-    #plt.hexbin(concatenated_mesh_coordinates[:,0], concatenated_mesh_coordinates[:,1], C=prob, cmap='rainbow')
-    prob = prob.numpy()
-    
-    plt.imshow(tf.transpose(tf.reshape(prob, (mesh_count, mesh_count))), origin="lower")
-    plt.xticks([0, mesh_count * 0.25, mesh_count * 0.5, mesh_count * 0.75, mesh_count], [xmin, xmin/2, 0, xmax/2, xmax])
-    plt.yticks([0, mesh_count * 0.25, mesh_count * 0.5, mesh_count * 0.75, mesh_count], [ymin, ymin/2, 0, ymax/2, ymax])
-    if name:
-        plt.savefig(name + ".png", format="png")
 
 def shuffle_split(samples, train_split, val_split):
     '''
@@ -218,6 +201,7 @@ class RealNVP(tfb.Bijector):
         y_a, y_b = tf.split(y, 2, axis=-1)
         return self._bijector_fn(y_b).inverse_log_det_jacobian(y_a, event_ndims=1)
 
+# parameters of the classifiers
 #------------------------------------------------------------------------------
 
 
@@ -241,6 +225,7 @@ cut = 0
 
 args = sys.argv
 
+#command line input for parameters
 print(args)
 if len(args) > 1:
     batchsizes = [int(args[1]), int(args[2])]
@@ -265,9 +250,11 @@ x_data, y_data = astroML.datasets.fetch_rrlyrae_combined(data_home="/tmp/astroML
 
 featurelabels = ["u-g","g-r", "r-i", "i-z"]
 
+# split data into training, testing and validating
 train_data0, batched_val_data0, batched_test_data0 = shuffle_split(x_data[y_data == 0], train_split, val_split)
 train_data1, batched_val_data1, batched_test_data1 = shuffle_split(x_data[y_data == 1], train_split, val_split)
 
+# batch the training data
 train_data_batched0 = tf.data.Dataset.from_tensor_slices(train_data0).batch(batch_size=batchsizes[0])
 train_data_batched1 = tf.data.Dataset.from_tensor_slices(train_data1).batch(batch_size=batchsizes[1])
 
@@ -280,18 +267,28 @@ base_dist1 = tfd.Normal(loc=0.0, scale=1.0)  # specify base distribution
 
 bijectors0 = []
 for i in range(0, layers):
+    #next line for Real NVP
     bijectors0.append(RealNVP(input_shape= (4), n_hidden= n_hidden))
+
+    #next line for MADE
     #bijectors0.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
-    bijectors0.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of MAF
+
+    bijectors0.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of bijector
     
+# combine bicetors into transformation
 bijector0 = tfb.Chain(bijectors=list(reversed(bijectors0)), name='bijector0')
 
 bijectors1 = []
 for i in range(0, layers):
-    bijectors1.append(RealNVP(input_shape= (4), n_hidden= n_hidden))
-    #bijectors1.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
-    bijectors1.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of MAF
+    #next line for Real NVP
+    bijectors0.append(RealNVP(input_shape= (4), n_hidden= n_hidden))
+
+    #next line for MADE
+    #bijectors0.append(tfb.MaskedAutoregressiveFlow(shift_and_log_scale_fn = Made(params=2, hidden_units=hidden_shape, activation="relu")))
     
+    bijectors0.append(tfb.Permute(permutation=[3, 0, 1, 2]))  # data permutation after layers of bijector
+    
+# combine bicetors into transformation
 bijector1 = tfb.Chain(bijectors=list(reversed(bijectors1)), name='bijector1')
 
 flow0 = tfd.TransformedDistribution(
@@ -322,6 +319,7 @@ test_loss = tf.convert_to_tensor(np.inf, dtype=tf.float32)
 
 startTime0 = time.time()
 
+# training of flow 0
 for i in range(max_epochs[0]):
     print("training step: ",i)
     for batch in train_data_batched0:
@@ -339,6 +337,7 @@ for i in range(max_epochs[0]):
 test_loss = tf.convert_to_tensor(np.inf, dtype=tf.float32)
 startTime1 = time.time()
 
+# training of flow 1
 for i in range(max_epochs[1]):
     print("training step: ",i)
     for batch in train_data_batched1:
@@ -355,8 +354,8 @@ for i in range(max_epochs[1]):
 
 endTraining = time.time()
 
-print(startTime1- startTime0)
-print(endTraining- startTime1)
+print("training of flow 0 took: ",startTime1- startTime0)
+print("training of flow 1 took: ",endTraining- startTime1)
 
 
 #------------------------------------------------------------------------------
@@ -366,7 +365,7 @@ def classify(dist1, dist2, data): #returns the test statistic ln(p1(data)/p2(dat
     prob2 = dist2.log_prob(data)
     return prob1 - prob2
 
-def proportionRight(data, signal, flow0, flow1, cut= 0): #returns proportion of correct classified data
+def proportionRight(data, signal, flow0, flow1, cut= 0): #returns proportion of correct classified data, false negative and false positive
     response = classify(flow0, flow1, data)
     n1right = np.count_nonzero(np.logical_and((response < cut), (signal == 1)))
     n1wrong = np.count_nonzero(np.logical_and((response < cut), (signal == 0)))
@@ -449,6 +448,7 @@ plt.legend()
 plt.savefig("figs/training_loss_1.png", format="png")
 plt.clf()
 
+# for automated parameter variation
 if len(args) > 1:
     import csv
 

@@ -40,6 +40,7 @@
 \usepackage{siunitx}
 \usepackage{subcaption}
 \usepackage{mwe}
+\usepackage{hyperref}
 
 %\usepackage{hyperref}% add hypertext capabilities
 %\usepackage[mathlines]{lineno}% Enable numbering of text and display math
@@ -81,7 +82,7 @@
 %    use the optional argument of the \verb+\item+ command to give the category of each item.
 %  \end{description}
 
-In this paper, a recent method named normalizing flows is utilized to construct density estimators for the purpose of classification. Normalizing flows are a class of transformation, which can be trained with gradient descend to estimate the distribution of data or to generate data in a toy model.
+In this paper, a method named normalizing flows is utilized to construct density estimators for the purpose of classification. Normalizing flows are a class of transformation, which can be trained with gradient descend to estimate the distribution of data or to generate data in a toy model.
 
 In this paper, the expressiveness of fully connected neural networks is used in a class of transformation known as normalizing flows in order to construct density estimator. Further these estimators are utilized to classify stars\todo{more explizit}.
 
@@ -200,7 +201,7 @@ In order to achieve inveribility of $f_k$ we use a method called \textit{freezin
 	x_{i<j} &\rightarrow g(x_{i<j},s(x_{i\geq j})) = 	x_{i<j}'\\
 	x_{i\geq j} &\rightarrow x_{i\geq j} = x_{i\geq j}'
 \end{align*}
-where $g$ has to be an invertible function, but $s$ does not have to be invertible. We will use artificial neural nets (ANN) to give these transformations the needed expressiveness. The parameter $j$ is dependent on the explicit parametrization of $f_k$. Between the coupling layers the features are permuted so that all are being transformed or have influence on the transformation.
+where $g$ has to be an invertible function, but $s$ does not have to be invertible. We will use artificial neural nets (ANN) for $s$ to give these transformations the needed expressiveness. The parameter $j$ is dependent on the explicit parametrization of $f_k$. Between the coupling layers the features are permuted so that all are being transformed or have influence on the transformation.
 
 The inverse of this is then
 \begin{align*}
@@ -233,7 +234,7 @@ where the $x_n$ are the sampled target data. Thus we have to be able to compute 
 
 \section{Normalizing flow categories}
 The two normalizing flow parameterizations we used are a Masked Autoencoder (\textbf{MADE}) \cite{pmlr-v37-germain15}, provided by the tensorflow library and a Real NVP \cite{JMLR:v22:19-1028}. 
-The transformation of the Real NVP is: \todo{bold for vectors}
+The transformation of the Real NVP is:
 \begin{align*}
 	x_{0...\frac{d-1}{2}} &\rightarrow \alpha \cdot x_{0...\frac{d-1}{2}} + \beta\\
 	x_{\frac{d-1}{2}...d-1} &\rightarrow x_{\frac{d-1}{2}...d-1} \\
@@ -318,12 +319,13 @@ Both models result in histograms of the test statistic as in \ref{fig:histt}
 	{\small histograms of the test statistic $t$ for (left) Real NVP (right) MADE} 
 	\label{fig:histt}
 \end{figure*}
-We can see that both models deliver a negative response for the signal. For the background we observe that most of the data has a positive test statistic $t$, thus a classification of signal and background with a cut at $t=0$ is the best cut to minimize false negative classification. But we also notice that then some background data is classified as signal, making a 100 \% accurate classification in this manner unachievable. With a cut of 0 the results of the classification are shown in table \ref{tab: res}, with  
+We can see that both models deliver a negative response for the signal. For the background we observe that most of the data has a positive test statistic $t$, thus a classification of signal and background with a cut at $t=0$ is the best cut to minimize false negative classification, but there is also background data, that has $t<0$. With a cut of 0 the results of the classification are shown in table \ref{tab: res}, with : 
 \begin{align*}
 \text{correctly classified}~&=~\frac{\# \text{true positive}+ \# \text{true negative}}{\# \text{all}}\\ \text{false positive}~&=~\frac{\# \text{false positive}}{\# \text{all}}\\
 \text{false negative}~&=~\frac{\# \text{false negative}}{\# \text{all}}
 \end{align*}
-.
+Both models classify 98\% of the data correctly, leaving only 1\% false positive results.
+ In figure \ref{fig:ROC} we see the ROC-Curves for both models. Since the false positive and the false negative rates are low the ROC-Curves show very high efficiency for low error rates, thus stating that the chosen cut has little impact.
 \begin{table}
 	\centering
 	\begin{tabular}{|l|l|l|}
@@ -340,7 +342,6 @@ We can see that both models deliver a negative response for the signal. For the 
 	\caption{Results of the classification for Real NVP and MADE. \label{tab: res}}
 \end{table}
 
-For different cuts we look at the ROC-curves of both models \todo{ROC beschr}
  \begin{figure*}[ht]
 	\centering
 	\begin{subfigure}[h]{0.4\textwidth}
@@ -361,7 +362,7 @@ For different cuts we look at the ROC-curves of both models \todo{ROC beschr}
 	\label{fig:ROC}
 \end{figure*}
 
-\todo{Loss beschr}
+In figure \ref{fig:losst} we see the loss of the Real NVP during training. Since the data of the background is fare greater than of the signal the number of needed steps for training the 0 flow is much less than of the signal. Since the loss function has a constant offset the loss during training does not approach 0. We can also see that the loss of the signal flow 1 is less smooth than of flow 0, because of the different batch sizes.
 
  \begin{figure*}[ht]
 	\centering
@@ -378,18 +379,14 @@ For different cuts we look at the ROC-curves of both models \todo{ROC beschr}
 		%\caption[]%
 		%{{\small Network 2}}    
 	\end{subfigure}
-	\caption[ loss function over time on the training data]
-	{\small loss function over time on the training data} 
+	\caption[ loss function over time on the training data of the Real NVP]
+	{\small loss function over time on the training data of the Real NVP} 
 	\label{fig:losst}
 \end{figure*}
 
 
-\section{Summary}
-\todo{Summary}
-
 \section{Conclusion}
-\todo{conclusion}
-what left to do
+The normalizing flow method for classification of RR-Lyrae stars is successful, achieving correct classification of 98\% . Two normalizing flow models are implemented, using the tensorflow library and tested, showing little difference on the giving data set. 
 
 
 \bibliography{report}
