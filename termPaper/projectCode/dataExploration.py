@@ -43,28 +43,31 @@ for i in range(len(x_data[0])):
 import itertools as it
 import numpy as np
 
+plt.rcParams.update({'font.size': 20})
 
-fig, ax = plt.subplots(len(x_data[0]),len(x_data[0]), figsize=(20,20))
-plt.subplots_adjust(hspace=0.5) # has to be after subplots
+fig, ax = plt.subplots(len(x_data[0]),len(x_data[0]), figsize=(40,40))
+plt.subplots_adjust(hspace=0.7) # has to be after subplots
 
 for ij in it.product(range(len(x_data[0])), repeat=2):
-    ax[ij[0]][ij[1]].hist2d(x_data[:,ij[0]],x_data[:,ij[1]], bins=100)
-    ax[ij[0]][ij[1]].set_xlabel(f"{featurelabels[ij[0]]}")
-    ax[ij[0]][ij[1]].set_ylabel(f"{featurelabels[ij[1]]}")
+    ax[ij[0]][ij[1]].hist2d(x_data[y_data==0,ij[0]],x_data[y_data==0,ij[1]], bins=100)
+    ax[ij[0]][ij[1]].set_xlabel(f"{featurelabels[ij[0]]}", fontsize = 20)
+    ax[ij[0]][ij[1]].set_ylabel(f"{featurelabels[ij[1]]}", fontsize = 20)
 
 
 plt.savefig(f"figs/correlation_features.png",format="png")
 plt.clf()
 
+plt.rcParams.update({'font.size': 20})
+
 # just signal == 1
-fig, ax = plt.subplots(len(x_data[0]),len(x_data[0]), figsize=(20,20))
-plt.subplots_adjust(hspace=0.5) # has to be after subplots so that labels dont overlap
+fig, ax = plt.subplots(len(x_data[0]),len(x_data[0]), figsize=(30,30))
+plt.subplots_adjust(hspace=0.7) # has to be after subplots so that labels dont overlap
 
 
 for ij in it.product(range(len(x_data[0])), repeat=2):
     ax[ij[0]][ij[1]].hist2d(x_data[y_data==1,ij[0]],x_data[y_data==1,ij[1]], bins=25)
-    ax[ij[0]][ij[1]].set_xlabel(f"{featurelabels[ij[0]]}")
-    ax[ij[0]][ij[1]].set_ylabel(f"{featurelabels[ij[1]]}")
+    ax[ij[0]][ij[1]].set_xlabel(f"{featurelabels[ij[0]]}", fontsize = 20)
+    ax[ij[0]][ij[1]].set_ylabel(f"{featurelabels[ij[1]]}", fontsize = 20)
 
 plt.savefig(f"figs/correlation_features_label1.png",format="png")
 plt.clf()
